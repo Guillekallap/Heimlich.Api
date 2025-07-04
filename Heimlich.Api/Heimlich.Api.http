@@ -1,0 +1,6 @@
+@Heimlich.Api_HostAddress = http://localhost:5221
+
+GET {{Heimlich.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
