@@ -3,16 +3,15 @@
     public class PracticeSession
     {
         public int Id { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime? EndTime { get; set; }
-
+        public DateTime Date { get; set; }
+        public string PractitionerId { get; set; }
+        public User Practitioner { get; set; }
         public int PracticeTypeId { get; set; }
         public PracticeType PracticeType { get; set; }
+        public int? TrunkId { get; set; }
+        public Trunk Trunk { get; set; }
+        public ICollection<Measurement> Measurements { get; set; }
+        public ICollection<Evaluation> Evaluations { get; set; }
 
-        public string UserId { get; set; }
-        public User User { get; set; }
-
-        public ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
-        public Evaluation Evaluation { get; set; }
     }
 }

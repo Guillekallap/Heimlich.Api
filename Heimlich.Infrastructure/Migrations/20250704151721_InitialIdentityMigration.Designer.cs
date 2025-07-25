@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Heimlich.Infrastructure.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
+    [DbContext(typeof(HeimlichDbContext))]
     [Migration("20250704151721_InitialIdentityMigration")]
     partial class InitialIdentityMigration
     {

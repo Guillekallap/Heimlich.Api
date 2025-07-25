@@ -1,4 +1,6 @@
-﻿namespace Heimlich.Domain.Entities
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace Heimlich.Domain.Entities
 {
     public class User : IdentityUser
     {
@@ -10,8 +12,7 @@
         public DateTime CreationDate { get; set; }
         public int RoleId { get; set; }
 
-        public ICollection<Group> Groups { get; set; } = new List<Group>();
-        public ICollection<PracticeSession> PracticeSessions { get; set; } = new List<PracticeSession>();
-        public ICollection<Evaluation> Evaluations { get; set; } = new List<Evaluation>();
+        public ICollection<UserGroup> UserGroups { get; set; }
+        public ICollection<PracticeSession> PracticeSessions { get; set; }
     }
 }

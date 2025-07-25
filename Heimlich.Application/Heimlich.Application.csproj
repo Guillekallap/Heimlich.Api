@@ -7,7 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediatR" Version="13.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Heimlich.Domain\Heimlich.Domain.csproj" />
+    <ProjectReference Include="..\Heimlich.Infrastructure\Heimlich.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
