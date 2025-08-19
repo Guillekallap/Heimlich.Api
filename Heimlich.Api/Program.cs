@@ -1,4 +1,4 @@
-using Heimlich.Application.Features.Auth;
+using Heimlich.Application.Features.Auth.Handlers;
 using Heimlich.Infrastructure;
 using Heimlich.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

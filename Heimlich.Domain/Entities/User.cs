@@ -4,7 +4,6 @@ namespace Heimlich.Domain.Entities
 {
     public class User : IdentityUser
     {
-        public int Id { get; set; }
         public string Username { get; set; } = default!;
         public string Mail { get; set; } = default!;
         public string Fullname { get; set; } = default!;

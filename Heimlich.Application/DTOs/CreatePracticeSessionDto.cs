@@ -1,8 +1,10 @@
-﻿namespace Heimlich.Application.DTOs
+﻿using Heimlich.Domain.Entities;
+
+namespace Heimlich.Application.DTOs
 {
     public class CreatePracticeSessionDto
     {
-        public string Title { get; set; }
-        public DateTime ScheduledAt { get; set; }
+        public PracticeType PracticeType { get; set; }
+        public DateTime CreationDate { get; set; }
     }
 }

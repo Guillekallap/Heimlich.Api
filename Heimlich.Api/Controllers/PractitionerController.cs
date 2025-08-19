@@ -1,5 +1,4 @@
-﻿using Heimlich.Application.DTOs;
-using Heimlich.Application.Features.PracticeSessions.Queries;
+﻿using Heimlich.Application.Features.PracticeSessions.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,10 +8,11 @@ namespace Heimlich.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Practitioner")]
-    public class PartitionerController : ControllerBase
+    public class PractitionerController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public PartitionerController(IMediator mediator) => _mediator = mediator;
+
+        public PractitionerController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet("practice-sessions")]
         public async Task<IActionResult> GetPracticeSessions()
@@ -25,5 +25,3 @@ namespace Heimlich.Api.Controllers
         // Aquí podrían agregarse endpoints adicionales (p.ej. reservar sesiones, ver grupos propios, etc.)
     }
 }
-
-

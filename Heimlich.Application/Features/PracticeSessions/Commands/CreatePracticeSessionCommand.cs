@@ -1,11 +1,12 @@
 ﻿using Heimlich.Application.DTOs;
+using Heimlich.Domain.Entities;
 using MediatR;
 
 namespace Heimlich.Application.Features.PracticeSessions.Commands
 {
     public class CreatePracticeSessionCommand : IRequest<PracticeSessionDto>
     {
-        public string Title { get; set; }
-        public DateTime ScheduledAt { get; set; }
+        public PracticeType PracticeType { get; set; }
+        public DateTime CreationDate { get; set; }
     }
 }

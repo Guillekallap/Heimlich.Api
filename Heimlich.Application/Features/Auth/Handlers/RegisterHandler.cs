@@ -1,15 +1,14 @@
 ﻿using Heimlich.Application.Features.Auth.Commands;
-using Heimlich.Domain.Entities;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-
 
 namespace Heimlich.Application.Features.Auth.Handlers
 {
     public class RegisterHandler : IRequestHandler<RegisterCommand, RegisterResponseDto>
     {
         private readonly UserManager<ApplicationUser> _userManager;
+
         public RegisterHandler(UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;

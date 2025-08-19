@@ -9,6 +9,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
     public class CreateGroupHandler : IRequestHandler<CreateGroupCommand, GroupDto>
     {
         private readonly HeimlichDbContext _context;
+
         public CreateGroupHandler(HeimlichDbContext context) => _context = context;
 
         public async Task<GroupDto> Handle(CreateGroupCommand request, CancellationToken cancellationToken)

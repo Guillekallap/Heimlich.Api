@@ -13,36 +13,37 @@ namespace Heimlich.Infrastructure
         public DbSet<PracticeSession> PracticeSessions { get; set; }
         public DbSet<Evaluation> Evaluations { get; set; }
         public DbSet<Measurement> Measurements { get; set; }
+
         public HeimlichDbContext(DbContextOptions<HeimlichDbContext> options)
         : base(options) { }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
             builder.Entity<UserGroup>()
-            .HasKey(ug => new { ug.UserId, ug.GroupId });
-                builder.Entity<UserGroup>()
+                .HasKey(ug => new { ug.UserId, ug.GroupId });
+            builder.Entity<UserGroup>()
                 .HasOne(ug => ug.User)
                 .WithMany(u => u.UserGroups)
                 .HasForeignKey(ug => ug.UserId);
-                builder.Entity<UserGroup>()
+            builder.Entity<UserGroup>()
                 .HasOne(ug => ug.Group)
                 .WithMany(g => g.UserGroups)
                 .HasForeignKey(ug => ug.GroupId);
 
-                builder.Entity<PracticeSession>()
+            builder.Entity<PracticeSession>()
                 .HasOne(ps => ps.Practitioner)
                 .WithMany(u => u.PracticeSessions)
                 .HasForeignKey(ps => ps.PractitionerId);
-                builder.Entity<Evaluation>()
-                .HasOne(ev => ev.PracticeSession)
-                .WithMany(ps => ps.Evaluations)
-                .HasForeignKey(ev => ev.PracticeSessionId);
-                builder.Entity<Measurement>()
+            builder.Entity<Evaluation>()
+                .HasOne(ev => ev.EvaluatedUser)
+                .WithMany()
+                .HasForeignKey(ev => ev.EvaluatedUserId);
+            builder.Entity<Measurement>()
                 .HasOne(m => m.PracticeSession)
                 .WithMany(ps => ps.Measurements)
                 .HasForeignKey(m => m.PracticeSessionId);
         }
     }
-
 }

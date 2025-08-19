@@ -1,5 +1,4 @@
-﻿using Heimlich.Application.DTO;
-using MediatR;
+﻿using MediatR;
 
 namespace Heimlich.Application.Features.Auth.Commands
 {

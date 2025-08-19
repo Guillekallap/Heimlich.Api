@@ -1,5 +1,4 @@
 ﻿using Heimlich.Application.DTOs;
-using Heimlich.Application.Features.Groups;
 using Heimlich.Application.Features.Groups.Commands;
 using Heimlich.Application.Features.Groups.Queries;
 using Heimlich.Application.Features.PracticeSessions.Commands;
@@ -16,6 +15,7 @@ namespace Heimlich.Api.Controllers
     public class InstructorController : ControllerBase
     {
         private readonly IMediator _mediator;
+
         public InstructorController(IMediator mediator) => _mediator = mediator;
 
         [HttpPost("groups")]
@@ -39,8 +39,8 @@ namespace Heimlich.Api.Controllers
         {
             var command = new CreatePracticeSessionCommand
             {
-                Title = dto.Title,
-                ScheduledAt = dto.ScheduledAt
+                PracticeType = dto.PracticeType,
+                CreationDate = dto.CreationDate
             };
             var session = await _mediator.Send(command);
             return Ok(session);

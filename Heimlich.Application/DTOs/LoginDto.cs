@@ -1,5 +1,4 @@
 ﻿namespace Heimlich.Application.DTOs
-
 {
     public class LoginUserDto
     {
