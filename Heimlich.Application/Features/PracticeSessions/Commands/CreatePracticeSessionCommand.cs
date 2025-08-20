@@ -1,12 +1,18 @@
 ﻿using Heimlich.Application.DTOs;
-using Heimlich.Domain.Entities;
+using Heimlich.Domain.Enums;
 using MediatR;
 
 namespace Heimlich.Application.Features.PracticeSessions.Commands
 {
     public class CreatePracticeSessionCommand : IRequest<PracticeSessionDto>
     {
-        public PracticeType PracticeType { get; set; }
-        public DateTime CreationDate { get; set; }
+        public CreatePracticeSessionDto Dto { get; }
+        public PracticeTypeEnum PracticeType { get; }
+
+        public CreatePracticeSessionCommand(CreatePracticeSessionDto dto, PracticeTypeEnum practiceType)
+        {
+            Dto = dto;
+            PracticeType = practiceType;
+        }
     }
 }

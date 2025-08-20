@@ -26,11 +26,18 @@ namespace Heimlich.Application.Features.Auth.Handlers
 
         public async Task<AuthResultDto> Handle(LoginQuery request, CancellationToken cancellationToken)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null) return null;
+            ApplicationUser user = null;
+            if (!string.IsNullOrEmpty(request.Email))
+                user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null && !string.IsNullOrEmpty(request.UserName))
+                user = await _userManager.FindByNameAsync(request.UserName);
+
+            if (user == null)
+                return new AuthResultDto { Error = "Usuario inexistente" };
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
-            if (!result.Succeeded) return null;
+            if (!result.Succeeded)
+                return new AuthResultDto { Error = "Contraseña incorrecta" };
 
             // Crear JWT con roles del usuario
             var roles = await _userManager.GetRolesAsync(user);

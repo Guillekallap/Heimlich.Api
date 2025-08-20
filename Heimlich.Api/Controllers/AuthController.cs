@@ -13,23 +13,38 @@ namespace Heimlich.Api.Controllers
     {
         private readonly IMediator _mediator;
 
-        public AuthController(IMediator mediator) => _mediator = mediator;
+        public AuthController(IMediator mediator)
+        {
+            _mediator = mediator;
+        }
 
         [HttpPost("register"), AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
-            var command = new RegisterCommand { UserName = dto.UserName, Email = dto.Email, Password = dto.Password};
+            var command = new RegisterCommand { UserName = dto.UserName, Email = dto.Email, Password = dto.Password };
             var result = await _mediator.Send(command);
+            if (!string.IsNullOrEmpty(result?.Error))
+                return BadRequest(new { message = result.Error });
             return CreatedAtAction(nameof(Register), result);
         }
 
         [HttpPost("login"), AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
-            var query = new LoginQuery { Email = dto.Email, Password = dto.Password };
+            var query = new LoginQuery { Email = dto.Email, UserName = dto.UserName, Password = dto.Password };
             var authResult = await _mediator.Send(query);
-            if (authResult == null) return Unauthorized();
+            if (!string.IsNullOrEmpty(authResult?.Error))
+                return Unauthorized(new { message = authResult.Error });
             return Ok(authResult);
+        }
+
+        [HttpPost("logout"), Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var result = await _mediator.Send(new LogoutCommand());
+            if (result)
+                return Ok(new { message = "Sesión cerrada correctamente" });
+            return BadRequest(new { message = "Error al cerrar sesión" });
         }
     }
 }

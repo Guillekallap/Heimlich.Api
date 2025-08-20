@@ -1,4 +1,6 @@
-﻿namespace Heimlich.Domain.Entities
+﻿using Heimlich.Domain.Enums;
+
+namespace Heimlich.Domain.Entities
 {
     public class PracticeSession
     {
@@ -6,8 +8,7 @@
         public DateTime CreationDate { get; set; }
         public string PractitionerId { get; set; }
         public User Practitioner { get; set; }
-        public int PracticeTypeId { get; set; }
-        public PracticeType PracticeType { get; set; }
+        public PracticeTypeEnum PracticeType { get; set; }
         public int? TrunkId { get; set; }
         public Trunk Trunk { get; set; }
         public ICollection<Measurement> Measurements { get; set; }

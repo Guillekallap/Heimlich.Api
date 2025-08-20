@@ -15,7 +15,9 @@ namespace Heimlich.Application.Features.PracticeSessions.Handlers
         public async Task<IEnumerable<PracticeSessionDto>> Handle(GetPracticeSessionsQuery request, CancellationToken cancellationToken)
         {
             return await _context.PracticeSessions
-                .Select(s => new PracticeSessionDto { Id = s.Id,
+                .Select(s => new PracticeSessionDto
+                {
+                    Id = s.Id,
                     PracticeType = s.PracticeType,
                     CreationDate = s.CreationDate
                 })

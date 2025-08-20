@@ -8,7 +8,6 @@ namespace Heimlich.Infrastructure
     {
         public DbSet<Group> Groups { get; set; }
         public DbSet<UserGroup> UserGroups { get; set; }
-        public DbSet<PracticeType> PracticeTypes { get; set; }
         public DbSet<Trunk> Torsos { get; set; }
         public DbSet<PracticeSession> PracticeSessions { get; set; }
         public DbSet<Evaluation> Evaluations { get; set; }
@@ -20,6 +19,13 @@ namespace Heimlich.Infrastructure
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<Measurement>()
+               .Property(m => m.MetricType)
+               .HasConversion<int>();
+            builder.Entity<PracticeSession>()
+               .Property(m => m.PracticeType)
+               .HasConversion<int>();
 
             builder.Entity<UserGroup>()
                 .HasKey(ug => new { ug.UserId, ug.GroupId });
