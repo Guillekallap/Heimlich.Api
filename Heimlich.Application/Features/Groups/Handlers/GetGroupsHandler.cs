@@ -1,6 +1,6 @@
 ﻿using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Groups.Queries;
-using Heimlich.Infrastructure;
+using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 

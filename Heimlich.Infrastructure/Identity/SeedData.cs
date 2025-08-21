@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Heimlich.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace Heimlich.Infrastructure.Identity
 {
     public static class SeedData
     {
-        public static async Task InitializeAsync(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public static async Task InitializeAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
         {
             string[] roles = new[] { "Instructor", "Practicante" };
 

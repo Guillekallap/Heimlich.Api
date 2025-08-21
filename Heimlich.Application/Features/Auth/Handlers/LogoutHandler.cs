@@ -1,13 +1,13 @@
 using Heimlich.Application.Features.Auth.Commands;
-using Heimlich.Infrastructure.Identity;
+using Heimlich.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 
 public class LogoutHandler : IRequestHandler<LogoutCommand, bool>
 {
-    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly SignInManager<User> _signInManager;
 
-    public LogoutHandler(SignInManager<ApplicationUser> signInManager)
+    public LogoutHandler(SignInManager<User> signInManager)
     {
         _signInManager = signInManager;
     }

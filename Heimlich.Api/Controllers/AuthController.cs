@@ -21,7 +21,14 @@ namespace Heimlich.Api.Controllers
         [HttpPost("register"), AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
-            var command = new RegisterCommand { UserName = dto.UserName, Email = dto.Email, Password = dto.Password };
+            var command = new RegisterCommand
+            {
+                UserName = dto.UserName,
+                Email = dto.Email,
+                Password = dto.Password,
+                FullName = dto.FullName,
+                Role = dto.Role
+            };
             var result = await _mediator.Send(command);
             if (!string.IsNullOrEmpty(result?.Error))
                 return BadRequest(new { message = result.Error });

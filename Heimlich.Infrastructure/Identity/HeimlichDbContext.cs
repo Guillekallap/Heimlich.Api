@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Heimlich.Infrastructure
+namespace Heimlich.Infrastructure.Identity
 {
     public class HeimlichDbContext : IdentityDbContext<User>
     {
@@ -45,11 +45,31 @@ namespace Heimlich.Infrastructure
             builder.Entity<Evaluation>()
                 .HasOne(ev => ev.EvaluatedUser)
                 .WithMany()
-                .HasForeignKey(ev => ev.EvaluatedUserId);
+                .HasForeignKey(ev => ev.EvaluatedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Evaluation>()
+                .HasOne(ev => ev.Evaluator)
+                .WithMany()
+                .HasForeignKey(ev => ev.EvaluatorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Evaluation>()
+                .HasOne(ev => ev.PracticeSession)
+                .WithMany(ps => ps.Evaluations)
+                .HasForeignKey(ev => ev.PracticeSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Entity<Measurement>()
                 .HasOne(m => m.PracticeSession)
                 .WithMany(ps => ps.Measurements)
                 .HasForeignKey(m => m.PracticeSessionId);
+
+            builder.Entity<PracticeSession>()
+                .HasOne(ps => ps.Group)
+                .WithMany(g => g.PracticeSessions)
+                .HasForeignKey(ps => ps.GroupId)
+                .IsRequired(false);
         }
     }
 }

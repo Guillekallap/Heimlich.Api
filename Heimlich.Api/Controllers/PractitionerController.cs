@@ -52,9 +52,10 @@ namespace Heimlich.Api.Controllers
 
         // Obtener grupo asignado
         [HttpGet("groups/assigned")]
-        public async Task<IActionResult> GetAssignedGroup([FromQuery] string userId)
+        public async Task<IActionResult> GetAssignedGroups([FromQuery] string userId)
         {
-            var result = await _mediator.Send(new GetAssignedGroupQuery(userId));
+            var query = new GetAssignedGroupQuery(userId);
+            var result = await _mediator.Send(query);
             return Ok(result);
         }
     }

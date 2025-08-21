@@ -1,5 +1,6 @@
 ﻿using Heimlich.Application.DTOs;
-using Heimlich.Infrastructure;
+using Heimlich.Domain.Enums;
+using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +23,8 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
             if (request.GroupId.HasValue)
             {
-                query = query.Where(e => e.PracticeSession.GroupId == request.GroupId.Value);
+                query = query.Where(e => e.PracticeSession.GroupId == request.GroupId.Value
+                                      && e.PracticeSession.PracticeType == PracticeTypeEnum.Evaluation);
             }
 
             var evaluations = await query.ToListAsync(cancellationToken);

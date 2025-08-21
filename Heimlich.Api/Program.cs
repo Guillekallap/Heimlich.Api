@@ -1,5 +1,6 @@
 using Heimlich.Application.Features.Auth.Handlers;
-using Heimlich.Infrastructure;
+using Heimlich.Domain.Entities;
+using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -15,7 +16,7 @@ var connectionString = config.GetConnectionString("DefaultConnection")
 builder.Services.AddDbContext<HeimlichDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<HeimlichDbContext>()
     .AddDefaultTokenProviders();
 
@@ -56,7 +57,7 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = new[] { "Instructor", "Practitioner" };
+    var roles = Enum.GetNames(typeof(UserRoleEnum));
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))

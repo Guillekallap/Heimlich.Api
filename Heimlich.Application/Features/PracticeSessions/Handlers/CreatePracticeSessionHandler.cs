@@ -1,7 +1,7 @@
 ﻿using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.PracticeSessions.Commands;
 using Heimlich.Domain.Entities;
-using Heimlich.Infrastructure;
+using Heimlich.Infrastructure.Identity;
 using MediatR;
 
 namespace Heimlich.Application.Features.PracticeSessions.Handlers
@@ -17,7 +17,7 @@ namespace Heimlich.Application.Features.PracticeSessions.Handlers
             var entity = new PracticeSession
             {
                 PracticeType = request.PracticeType,
-                CreationDate = request.CreationDate
+                CreationDate = request.Dto.CreationDate
             };
             _context.PracticeSessions.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
@@ -25,7 +25,7 @@ namespace Heimlich.Application.Features.PracticeSessions.Handlers
             {
                 Id = entity.Id,
                 PracticeType = request.PracticeType,
-                CreationDate = request.CreationDate
+                CreationDate = request.Dto.CreationDate
             };
         }
     }

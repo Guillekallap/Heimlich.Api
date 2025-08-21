@@ -11,6 +11,8 @@ namespace Heimlich.Domain.Entities
         public PracticeTypeEnum PracticeType { get; set; }
         public int? TrunkId { get; set; }
         public Trunk Trunk { get; set; }
+        public int? GroupId { get; set; } // Solo se asigna si PracticeType == Evaluation
+        public Group Group { get; set; }
         public ICollection<Measurement> Measurements { get; set; }
         public ICollection<Evaluation> Evaluations { get; set; }
     }

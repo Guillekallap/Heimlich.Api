@@ -1,6 +1,6 @@
 ﻿using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Auth.Queries;
-using Heimlich.Infrastructure.Identity;
+using Heimlich.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -13,11 +13,11 @@ namespace Heimlich.Application.Features.Auth.Handlers
 {
     public class LoginHandler : IRequestHandler<LoginQuery, AuthResultDto>
     {
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<User> _signInManager;
+        private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
 
-        public LoginHandler(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, IConfiguration configuration)
+        public LoginHandler(SignInManager<User> signInManager, UserManager<User> userManager, IConfiguration configuration)
         {
             _signInManager = signInManager;
             _userManager = userManager;
@@ -26,7 +26,7 @@ namespace Heimlich.Application.Features.Auth.Handlers
 
         public async Task<AuthResultDto> Handle(LoginQuery request, CancellationToken cancellationToken)
         {
-            ApplicationUser user = null;
+            User user = null;
             if (!string.IsNullOrEmpty(request.Email))
                 user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null && !string.IsNullOrEmpty(request.UserName))

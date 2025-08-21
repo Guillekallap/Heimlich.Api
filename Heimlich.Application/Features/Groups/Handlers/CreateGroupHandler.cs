@@ -1,7 +1,7 @@
 ﻿using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Groups.Commands;
 using Heimlich.Domain.Entities;
-using Heimlich.Infrastructure;
+using Heimlich.Infrastructure.Identity;
 using MediatR;
 
 namespace Heimlich.Application.Features.Groups.Handlers
