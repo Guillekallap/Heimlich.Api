@@ -7,12 +7,10 @@ namespace Heimlich.Application.Features.Groups.Commands
     {
         public int GroupId { get; set; }
         public string PractitionerId { get; set; }
-
         public AssignPractitionerToGroupCommand(int groupId, string practitionerId)
         {
             GroupId = groupId;
             PractitionerId = practitionerId;
         }
-
     }
 }

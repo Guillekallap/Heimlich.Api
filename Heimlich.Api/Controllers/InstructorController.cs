@@ -1,4 +1,5 @@
 ﻿using Heimlich.Application.DTOs;
+using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Application.Features.Groups.Commands;
 using Heimlich.Application.Features.Groups.Queries;
 using Heimlich.Application.Features.PracticeSessions.Commands;
@@ -11,12 +12,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace Heimlich.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/instructor")]
     [Authorize(Roles = "Instructor")]
     public class InstructorController : ControllerBase
     {
         private readonly IMediator _mediator;
-
         public InstructorController(IMediator mediator) => _mediator = mediator;
 
         // Crear grupo
@@ -74,19 +74,19 @@ namespace Heimlich.Api.Controllers
         }
 
         // Asignar practicante a grupo
-        [HttpPost("groups/{groupId}/assign")]
-        public async Task<IActionResult> AssignPractitionerToGroup(int groupId, [FromBody] AssignPractitionerDto dto)
+        [HttpPost("groups/{groupId}/practitioners")]
+        public async Task<IActionResult> AssignPractitioner(int groupId, [FromBody] AssignPractitionerDto dto)
         {
             var command = new AssignPractitionerToGroupCommand(groupId, dto.PractitionerId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
 
-        // Desasignar practicante de grupo
-        [HttpPost("groups/{groupId}/remove")]
-        public async Task<IActionResult> RemovePractitionerFromGroup(int groupId, [FromBody] RemovePractitionerDto dto)
+        // Eliminar practicante de grupo
+        [HttpDelete("groups/{groupId}/practitioners/{practitionerId}")]
+        public async Task<IActionResult> RemovePractitioner(int groupId, string practitionerId)
         {
-            var command = new RemovePractitionerFromGroupCommand(groupId, dto.PractitionerId);
+            var command = new RemovePractitionerFromGroupCommand(groupId, practitionerId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -115,6 +115,42 @@ namespace Heimlich.Api.Controllers
         {
             var query = new GetRankingQuery(groupId);
             var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+
+        // Configurar parámetros de evaluación (intervalos por sensor, errores, tiempo)
+        [HttpPut("groups/{groupId}/evaluation-parameters")]
+        public async Task<IActionResult> UpdateEvaluationParameters(int groupId, [FromBody] EvaluationParametersDto dto)
+        {
+            var command = new UpdateEvaluationParametersCommand(groupId, dto.SensorIntervals, dto.MaxErrors, dto.MaxTime);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        // Restablecer parámetros de evaluación
+        [HttpPost("groups/{groupId}/evaluation-parameters/reset")]
+        public async Task<IActionResult> ResetEvaluationParameters(int groupId)
+        {
+            var command = new ResetEvaluationParametersCommand(groupId);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        // Asignar practicante a evaluación
+        [HttpPost("evaluations/{evaluationId}/practitioners")]
+        public async Task<IActionResult> AssignPractitionerToEvaluation(int evaluationId, [FromBody] AssignPractitionerDto dto)
+        {
+            var command = new AssignPractitionerToEvaluationCommand(evaluationId, dto.PractitionerId);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        // Desasignar practicante de evaluación
+        [HttpDelete("evaluations/{evaluationId}/practitioners/{practitionerId}")]
+        public async Task<IActionResult> RemovePractitionerFromEvaluation(int evaluationId, string practitionerId)
+        {
+            var command = new RemovePractitionerFromEvaluationCommand(evaluationId, practitionerId);
+            var result = await _mediator.Send(command);
             return Ok(result);
         }
     }

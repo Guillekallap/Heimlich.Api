@@ -22,15 +22,19 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 .Include(g => g.UserGroups)
                 .FirstOrDefaultAsync(g => g.Id == request.GroupId, cancellationToken);
 
-            if (group == null) return null;
+            if (group == null)
+                throw new InvalidOperationException("El grupo no existe.");
 
-            if (!group.UserGroups.Any(ug => ug.UserId == request.PractitionerId))
-            {
-                group.UserGroups.Add(new UserGroup { GroupId = request.GroupId, UserId = request.PractitionerId });
-                await _context.SaveChangesAsync(cancellationToken);
-            }
+            var user = await _context.Users.FindAsync(request.PractitionerId);
+            if (user == null)
+                throw new InvalidOperationException("El practicante no existe.");
 
-            // Mapear a GroupDto
+            if (group.UserGroups.Any(ug => ug.UserId == request.PractitionerId))
+                throw new InvalidOperationException("El practicante ya está agregado al grupo.");
+
+            group.UserGroups.Add(new UserGroup { GroupId = request.GroupId, UserId = request.PractitionerId });
+            await _context.SaveChangesAsync(cancellationToken);
+
             return new GroupDto
             {
                 Id = group.Id,

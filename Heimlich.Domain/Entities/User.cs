@@ -6,8 +6,6 @@ namespace Heimlich.Domain.Entities
     {
         public string Fullname { get; set; } = default!;
         public DateTime CreationDate { get; set; }
-        public int RoleId { get; set; }
-
         public ICollection<UserGroup> UserGroups { get; set; }
         public ICollection<PracticeSession> PracticeSessions { get; set; }
     }

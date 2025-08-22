@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Heimlich.Infrastructure.Migrations
 {
     [DbContext(typeof(HeimlichDbContext))]
-    [Migration("20250821185111_InitialCreate")]
+    [Migration("20250822204027_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -224,9 +224,6 @@ namespace Heimlich.Infrastructure.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");

@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Heimlich.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/practitioner")]
     [Authorize(Roles = "Practitioner")]
     public class PractitionerController : ControllerBase
     {

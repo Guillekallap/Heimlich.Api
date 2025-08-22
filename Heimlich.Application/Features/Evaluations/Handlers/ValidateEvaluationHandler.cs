@@ -1,37 +1,39 @@
 using Heimlich.Application.DTOs;
-using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-public class ValidateEvaluationHandler : IRequestHandler<ValidateEvaluationCommand, EvaluationDto>
+namespace Heimlich.Application.Features.Evaluations.Handlers
 {
-    private readonly HeimlichDbContext _context;
-
-    public ValidateEvaluationHandler(HeimlichDbContext context)
+    public class ValidateEvaluationHandler : IRequestHandler<ValidateEvaluationCommand, EvaluationDto>
     {
-        _context = context;
-    }
+        private readonly HeimlichDbContext _context;
 
-    public async Task<EvaluationDto> Handle(ValidateEvaluationCommand request, CancellationToken cancellationToken)
-    {
-        var evaluation = await _context.Evaluations
-            .FirstOrDefaultAsync(e => e.Id == request.EvaluationId, cancellationToken);
-
-        if (evaluation == null) return null;
-
-        evaluation.IsValid = request.IsValid;
-        evaluation.Comments = request.Comments;
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return new EvaluationDto
+        public ValidateEvaluationHandler(HeimlichDbContext context)
         {
-            Id = evaluation.Id,
-            PracticeSessionId = evaluation.PracticeSessionId,
-            EvaluatorId = evaluation.EvaluatorId,
-            EvaluatedUserId = evaluation.EvaluatedUserId,
-            Score = evaluation.Score,
-            Comments = evaluation.Comments
-        };
+            _context = context;
+        }
+
+        public async Task<EvaluationDto> Handle(ValidateEvaluationCommand request, CancellationToken cancellationToken)
+        {
+            var evaluation = await _context.Evaluations
+                .FirstOrDefaultAsync(e => e.Id == request.EvaluationId, cancellationToken);
+
+            if (evaluation == null) return null;
+
+            evaluation.IsValid = request.IsValid;
+            evaluation.Comments = request.Comments;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return new EvaluationDto
+            {
+                Id = evaluation.Id,
+                PracticeSessionId = evaluation.PracticeSessionId,
+                EvaluatorId = evaluation.EvaluatorId,
+                EvaluatedUserId = evaluation.EvaluatedUserId,
+                Score = evaluation.Score,
+                Comments = evaluation.Comments
+            };
+        }
     }
 }

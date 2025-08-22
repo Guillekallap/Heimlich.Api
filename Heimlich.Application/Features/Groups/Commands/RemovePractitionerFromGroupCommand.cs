@@ -5,8 +5,8 @@ namespace Heimlich.Application.Features.Groups.Commands
 {
     public class RemovePractitionerFromGroupCommand : IRequest<GroupDto>
     {
-        public int GroupId { get; set; }
-        public string PractitionerId { get; set; }
+        public int GroupId { get; }
+        public string PractitionerId { get; }
 
         public RemovePractitionerFromGroupCommand(int groupId, string practitionerId)
         {
