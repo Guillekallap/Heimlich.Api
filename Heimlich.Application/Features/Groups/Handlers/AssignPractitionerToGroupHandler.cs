@@ -25,14 +25,18 @@ namespace Heimlich.Application.Features.Groups.Handlers
             if (group == null)
                 throw new InvalidOperationException("El grupo no existe.");
 
-            var user = await _context.Users.FindAsync(request.PractitionerId);
-            if (user == null)
-                throw new InvalidOperationException("El practicante no existe.");
+            foreach (var practitionerId in request.PractitionerIds)
+            {
+                var user = await _context.Users.FindAsync(practitionerId);
+                if (user == null)
+                    throw new InvalidOperationException($"El practicante con ID {practitionerId} no existe.");
 
-            if (group.UserGroups.Any(ug => ug.UserId == request.PractitionerId))
-                throw new InvalidOperationException("El practicante ya está agregado al grupo.");
+                if (group.UserGroups.Any(ug => ug.UserId == practitionerId))
+                    continue; // Ya está agregado, lo ignoramos
 
-            group.UserGroups.Add(new UserGroup { GroupId = request.GroupId, UserId = request.PractitionerId });
+                group.UserGroups.Add(new UserGroup { GroupId = request.GroupId, UserId = practitionerId });
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
 
             return new GroupDto
@@ -40,6 +44,8 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 Id = group.Id,
                 Name = group.Name,
                 Description = group.Description,
+                CreationDate = group.CreationDate,
+                Status = group.Status,
                 PractitionerIds = group.UserGroups.Select(ug => ug.UserId).ToList()
             };
         }

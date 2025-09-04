@@ -24,20 +24,27 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             if (evaluation == null)
                 throw new InvalidOperationException("La evaluación no existe.");
 
-            var user = await _context.Users.FindAsync(request.PractitionerId);
+            // Validar que la lista no esté vacía
+            if (request.PractitionerIds == null || !request.PractitionerIds.Any())
+                throw new InvalidOperationException("Debe especificar al menos un practicante para asignar.");
+
+            var practitionerId = request.PractitionerIds.First();
+
+            var user = await _context.Users.FindAsync(practitionerId);
             if (user == null)
                 throw new InvalidOperationException("El practicante no existe.");
 
-            if (evaluation.EvaluatedUserId == request.PractitionerId)
+            if (evaluation.EvaluatedUserId == practitionerId)
                 throw new InvalidOperationException("El practicante ya ha sido asignado a la evaluación.");
 
-            evaluation.EvaluatedUserId = request.PractitionerId;
+            evaluation.EvaluatedUserId = practitionerId;
             await _context.SaveChangesAsync(cancellationToken);
 
             return new EvaluationDto
             {
                 Id = evaluation.Id,
                 PracticeSessionId = evaluation.PracticeSessionId,
+                EvaluatorId = evaluation.EvaluatorId,
                 EvaluatedUserId = evaluation.EvaluatedUserId,
                 Score = evaluation.Score,
                 Comments = evaluation.Comments,

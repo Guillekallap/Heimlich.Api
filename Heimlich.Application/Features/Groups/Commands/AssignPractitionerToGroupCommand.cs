@@ -5,12 +5,13 @@ namespace Heimlich.Application.Features.Groups.Commands
 {
     public class AssignPractitionerToGroupCommand : IRequest<GroupDto>
     {
-        public int GroupId { get; set; }
-        public string PractitionerId { get; set; }
-        public AssignPractitionerToGroupCommand(int groupId, string practitionerId)
+        public int GroupId { get; }
+        public IList<string> PractitionerIds { get; }
+
+        public AssignPractitionerToGroupCommand(int groupId, IList<string> practitionerIds)
         {
             GroupId = groupId;
-            PractitionerId = practitionerId;
+            PractitionerIds = practitionerIds;
         }
     }
 }

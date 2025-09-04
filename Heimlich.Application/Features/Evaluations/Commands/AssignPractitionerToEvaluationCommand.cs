@@ -6,12 +6,12 @@ namespace Heimlich.Application.Features.Evaluations.Commands
     public class AssignPractitionerToEvaluationCommand : IRequest<EvaluationDto>
     {
         public int EvaluationId { get; }
-        public string PractitionerId { get; }
+        public IList<string> PractitionerIds { get; }
 
-        public AssignPractitionerToEvaluationCommand(int evaluationId, string practitionerId)
+        public AssignPractitionerToEvaluationCommand(int evaluationId, IList<string> practitionerIds)
         {
             EvaluationId = evaluationId;
-            PractitionerId = practitionerId;
+            PractitionerIds = practitionerIds;
         }
     }
 }

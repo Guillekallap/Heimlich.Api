@@ -1,4 +1,5 @@
-﻿using Heimlich.Application.DTOs;
+﻿using System.Security.Claims;
+using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Groups.Queries;
 using Heimlich.Application.Features.PracticeSessions.Commands;
 using Heimlich.Application.Features.PracticeSessions.Queries;
@@ -18,19 +19,34 @@ namespace Heimlich.Api.Controllers
 
         public PractitionerController(IMediator mediator) => _mediator = mediator;
 
-        // Ejecutar práctica de maniobra entrenamiento
-        [HttpPost("practice/training")]
-        public async Task<IActionResult> StartTraining([FromBody] CreatePracticeSessionDto dto)
-        {
-            var result = await _mediator.Send(new CreatePracticeSessionCommand(dto, PracticeTypeEnum.Training));
-            return Ok(result);
-        }
+        //// Ejecutar práctica de maniobra entrenamiento
+        //[HttpPost("practice/training")]
+        //public async Task<IActionResult> StartTraining([FromBody] CreatePracticeSessionDto dto)
+        //{   
+        //    // Obtener PractitionerId del token
+        //    var practitionerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //    if (string.IsNullOrEmpty(practitionerId))
+        //        return Unauthorized("No se pudo identificar al usuario practicante.");
+        //    var result = await _mediator.Send(new CreatePracticeSessionCommand(dto, PracticeTypeEnum.Training, practitionerId));
+        //    return Ok(result);
+        //}
 
         // Ejecutar práctica de maniobra simulación
         [HttpPost("practice/simulation")]
         public async Task<IActionResult> StartSimulation([FromBody] CreatePracticeSessionDto dto)
         {
-            var result = await _mediator.Send(new CreatePracticeSessionCommand(dto, PracticeTypeEnum.Simulation));
+            // Validación de TrunkId
+            if (dto.TrunkId <= 0)
+                return BadRequest("Debe especificar un TrunkId válido para la simulación.");
+
+            // Obtener PractitionerId del token
+            var practitionerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(practitionerId))
+                return Unauthorized("No se pudo identificar al usuario practicante.");
+
+            if (dto.GroupId.HasValue) dto.GroupId = null;
+            var command = new CreatePracticeSessionCommand(dto, PracticeTypeEnum.Simulation, practitionerId);
+            var result = await _mediator.Send(command);
             return Ok(result);
         }
 
@@ -55,8 +71,8 @@ namespace Heimlich.Api.Controllers
         public async Task<IActionResult> GetAssignedGroups([FromQuery] string userId)
         {
             var query = new GetAssignedGroupQuery(userId);
-            var result = await _mediator.Send(query);
-            return Ok(result);
+            var group = await _mediator.Send(query);
+            return Ok(group);
         }
     }
 }

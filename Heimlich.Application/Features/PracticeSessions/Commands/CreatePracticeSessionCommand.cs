@@ -8,11 +8,13 @@ namespace Heimlich.Application.Features.PracticeSessions.Commands
     {
         public CreatePracticeSessionDto Dto { get; }
         public PracticeTypeEnum PracticeType { get; }
+        public string PractitionerId { get; }
 
-        public CreatePracticeSessionCommand(CreatePracticeSessionDto dto, PracticeTypeEnum practiceType)
+        public CreatePracticeSessionCommand(CreatePracticeSessionDto dto, PracticeTypeEnum practiceType, string practitionerId)
         {
             Dto = dto;
             PracticeType = practiceType;
+            PractitionerId = practitionerId;
         }
     }
 }

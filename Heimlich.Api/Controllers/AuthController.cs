@@ -38,7 +38,7 @@ namespace Heimlich.Api.Controllers
         [HttpPost("login"), AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
-            var query = new LoginQuery { Email = dto.Email, UserName = dto.UserName, Password = dto.Password };
+            var query = new LoginQuery { UserName = dto.UserName, Password = dto.Password };
             var authResult = await _mediator.Send(query);
             if (!string.IsNullOrEmpty(authResult?.Error))
                 return Unauthorized(new { message = authResult.Error });

@@ -8,6 +8,7 @@ using Heimlich.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Heimlich.Api.Controllers
 {
@@ -38,12 +39,12 @@ namespace Heimlich.Api.Controllers
         }
 
         // Eliminar grupo
-        [HttpDelete("groups/{groupId}")]
-        public async Task<IActionResult> DeleteGroup(int groupId)
+        [HttpDelete("groups/{id}")]
+        public async Task<IActionResult> DeleteGroup(int id)
         {
-            var command = new DeleteGroupCommand(groupId);
-            var result = await _mediator.Send(command);
-            return Ok(result);
+            var command = new DeleteGroupCommand(id);
+            await _mediator.Send(command);
+            return NoContent();
         }
 
         // Visualizar grupo asignado
@@ -68,7 +69,12 @@ namespace Heimlich.Api.Controllers
         [HttpPost("practice/evaluation")]
         public async Task<IActionResult> StartEvaluation([FromBody] CreatePracticeSessionDto dto)
         {
-            var command = new CreatePracticeSessionCommand(dto, PracticeTypeEnum.Evaluation);
+            // Obtener PractitionerId del token
+            var practitionerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(practitionerId))
+                return Unauthorized("No se pudo identificar al usuario practicante.");
+
+            var command = new CreatePracticeSessionCommand(dto, PracticeTypeEnum.Evaluation, practitionerId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -77,7 +83,7 @@ namespace Heimlich.Api.Controllers
         [HttpPost("groups/{groupId}/practitioners")]
         public async Task<IActionResult> AssignPractitioner(int groupId, [FromBody] AssignPractitionerDto dto)
         {
-            var command = new AssignPractitionerToGroupCommand(groupId, dto.PractitionerId);
+            var command = new AssignPractitionerToGroupCommand(groupId, dto.PractitionerIds);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -140,7 +146,7 @@ namespace Heimlich.Api.Controllers
         [HttpPost("evaluations/{evaluationId}/practitioners")]
         public async Task<IActionResult> AssignPractitionerToEvaluation(int evaluationId, [FromBody] AssignPractitionerDto dto)
         {
-            var command = new AssignPractitionerToEvaluationCommand(evaluationId, dto.PractitionerId);
+            var command = new AssignPractitionerToEvaluationCommand(evaluationId, dto.PractitionerIds);
             var result = await _mediator.Send(command);
             return Ok(result);
         }

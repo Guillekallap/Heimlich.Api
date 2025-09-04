@@ -1,4 +1,6 @@
+using AutoMapper;
 using Heimlich.Application.Features.Auth.Handlers;
+using Heimlich.Application.Mapping;
 using Heimlich.Domain.Entities;
 using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
@@ -16,29 +18,39 @@ var connectionString = config.GetConnectionString("DefaultConnection")
 builder.Services.AddDbContext<HeimlichDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// Registro de Identity
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<HeimlichDbContext>()
     .AddDefaultTokenProviders();
 
-// Configurar MediatR escaneando los handlers en el ensamblado de la aplicación
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+});
+
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<RegisterHandler>());
 
-// Configurar JWT (lectura de claves de configuración)
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+// Configuración correcta de JWT como esquema por defecto
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
@@ -71,6 +83,15 @@ builder.Services.AddSwaggerGen(c =>
             new string[] {}
         }
     });
+});
+
+builder.Services.AddSingleton(provider =>
+{
+    var config = new MapperConfiguration(cfg =>
+    {
+        cfg.AddProfile(new AutoMapperProfile());
+    });
+    return config.CreateMapper();
 });
 
 var app = builder.Build();

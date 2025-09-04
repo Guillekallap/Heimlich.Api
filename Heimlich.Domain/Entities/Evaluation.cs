@@ -1,6 +1,5 @@
 ﻿namespace Heimlich.Domain.Entities
 {
-    // Heimlich.Domain/Entities/Evaluation.cs
     public class Evaluation
     {
         public int Id { get; set; }

@@ -26,11 +26,7 @@ namespace Heimlich.Application.Features.Auth.Handlers
 
         public async Task<AuthResultDto> Handle(LoginQuery request, CancellationToken cancellationToken)
         {
-            User user = null;
-            if (!string.IsNullOrEmpty(request.Email))
-                user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null && !string.IsNullOrEmpty(request.UserName))
-                user = await _userManager.FindByNameAsync(request.UserName);
+            var user = await _userManager.FindByNameAsync(request.UserName);
 
             if (user == null)
                 return new AuthResultDto { Error = "Usuario inexistente" };
