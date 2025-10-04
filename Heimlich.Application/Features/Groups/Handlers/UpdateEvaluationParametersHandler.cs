@@ -18,20 +18,13 @@ namespace Heimlich.Application.Features.Groups.Handlers
         public async Task<GroupDto> Handle(UpdateEvaluationParametersCommand request, CancellationToken cancellationToken)
         {
             var group = await _context.Groups
-                .Include(g => g.PracticeSessions)
+                .Include(g => g.UserGroups)
                 .FirstOrDefaultAsync(g => g.Id == request.GroupId, cancellationToken);
 
             if (group == null)
                 throw new InvalidOperationException("El grupo no existe.");
 
-            // Aquí deberías tener una entidad/configuración para los parámetros de evaluación
-            // Ejemplo: Actualizar los parámetros en la entidad correspondiente
-            // group.EvaluationParameters.SensorIntervals = request.SensorIntervals;
-            // group.EvaluationParameters.MaxErrors = request.MaxErrors;
-            // group.EvaluationParameters.MaxTime = request.MaxTime;
-            // await _context.SaveChangesAsync(cancellationToken);
-
-            // Simulación de guardado
+            // TODO: aplicar cambios a entidad EvaluationConfig (pendiente de creación)
             await Task.CompletedTask;
 
             return new GroupDto

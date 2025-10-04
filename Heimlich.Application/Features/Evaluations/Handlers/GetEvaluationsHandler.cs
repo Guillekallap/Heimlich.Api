@@ -1,5 +1,4 @@
 ﻿using Heimlich.Application.DTOs;
-using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -17,14 +16,11 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
         public async Task<List<EvaluationDto>> Handle(GetEvaluationsQuery request, CancellationToken cancellationToken)
         {
-            var query = _context.Evaluations
-                .Include(e => e.PracticeSession)
-                .AsQueryable();
+            var query = _context.Evaluations.AsQueryable();
 
             if (request.GroupId.HasValue)
             {
-                query = query.Where(e => e.PracticeSession.GroupId == request.GroupId.Value
-                                      && e.PracticeSession.PracticeType == PracticeTypeEnum.Evaluation);
+                // TODO: filtrar por grupo cuando Evaluation tenga relación directa a Group si se requiere
             }
 
             var evaluations = await query.ToListAsync(cancellationToken);
@@ -32,11 +28,12 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             return evaluations.Select(e => new EvaluationDto
             {
                 Id = e.Id,
-                PracticeSessionId = e.PracticeSessionId,
                 EvaluatorId = e.EvaluatorId,
                 EvaluatedUserId = e.EvaluatedUserId,
                 Score = e.Score,
-                Comments = e.Comments
+                Comments = e.Comments,
+                IsValid = e.IsValid,
+                State = e.State
             }).ToList();
         }
     }

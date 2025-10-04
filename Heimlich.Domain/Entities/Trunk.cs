@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public string Description { get; set; } // e.g. "Adult Mannequin"
-        public ICollection<PracticeSession> Sessions { get; set; }
+        public ICollection<Simulation> Simulations { get; set; }
+        public ICollection<Evaluation> Evaluations { get; set; }
     }
 }

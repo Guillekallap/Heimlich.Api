@@ -1,33 +1,30 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Heimlich.Application.DTOs;
+using Heimlich.Application.Features.Evaluations.Commands;
+using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Heimlich.Domain.Enums;
 
 namespace Heimlich.Application.Features.Evaluations.Handlers
 {
-    public class ValidateEvaluationHandler : IRequestHandler<ValidateEvaluationCommand, EvaluationDto>
+    public class ValidateEvaluationExtendedHandler : IRequestHandler<ValidateEvaluationExtendedCommand, EvaluationDto>
     {
         private readonly HeimlichDbContext _context;
+        public ValidateEvaluationExtendedHandler(HeimlichDbContext context) { _context = context; }
 
-        public ValidateEvaluationHandler(HeimlichDbContext context)
+        public async Task<EvaluationDto> Handle(ValidateEvaluationExtendedCommand request, CancellationToken cancellationToken)
         {
-            _context = context;
-        }
-
-        public async Task<EvaluationDto> Handle(ValidateEvaluationCommand request, CancellationToken cancellationToken)
-        {
-            var evaluation = await _context.Evaluations
-                .FirstOrDefaultAsync(e => e.Id == request.EvaluationId, cancellationToken);
-
+            var evaluation = await _context.Evaluations.FirstOrDefaultAsync(e => e.Id == request.EvaluationId && e.EvaluatorId == request.EvaluatorId, cancellationToken);
             if (evaluation == null) return null;
-
+            evaluation.Score = request.Score;
             evaluation.IsValid = request.IsValid;
             evaluation.Comments = request.Comments;
+            evaluation.Signature = request.Signature;
             evaluation.State = SessionStateEnum.Validated;
             evaluation.ValidatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
-
             return new EvaluationDto
             {
                 Id = evaluation.Id,

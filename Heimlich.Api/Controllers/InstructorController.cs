@@ -1,10 +1,8 @@
 ﻿using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Evaluations.Commands;
+using Heimlich.Application.Features.Evaluations.Queries;
 using Heimlich.Application.Features.Groups.Commands;
 using Heimlich.Application.Features.Groups.Queries;
-using Heimlich.Application.Features.PracticeSessions.Commands;
-using Heimlich.Application.Features.PracticeSessions.Queries;
-using Heimlich.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -56,106 +54,62 @@ namespace Heimlich.Api.Controllers
             return Ok(result);
         }
 
-        // Visualizar sesiones de práctica
-        [HttpGet("practice-sessions")]
-        public async Task<IActionResult> GetSessions([FromQuery] string userId)
-        {
-            var query = new GetPracticeSessionsQuery(userId, PracticeTypeEnum.Evaluation);
-            var sessions = await _mediator.Send(query);
-            return Ok(sessions);
-        }
-
-        // Ejecutar evaluación
-        [HttpPost("practice/evaluation")]
-        public async Task<IActionResult> StartEvaluation([FromBody] CreatePracticeSessionDto dto)
-        {
-            // Obtener PractitionerId del token
-            var practitionerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(practitionerId))
-                return Unauthorized("No se pudo identificar al usuario practicante.");
-
-            var command = new CreatePracticeSessionCommand(dto, PracticeTypeEnum.Evaluation, practitionerId);
-            var result = await _mediator.Send(command);
-            return Ok(result);
-        }
-
-        // Asignar practicante a grupo
-        [HttpPost("groups/{groupId}/practitioners")]
-        public async Task<IActionResult> AssignPractitioner(int groupId, [FromBody] AssignPractitionerDto dto)
-        {
-            var command = new AssignPractitionerToGroupCommand(groupId, dto.PractitionerIds);
-            var result = await _mediator.Send(command);
-            return Ok(result);
-        }
-
-        // Eliminar practicante de grupo
-        [HttpDelete("groups/{groupId}/practitioners/{practitionerId}")]
-        public async Task<IActionResult> RemovePractitioner(int groupId, string practitionerId)
-        {
-            var command = new RemovePractitionerFromGroupCommand(groupId, practitionerId);
-            var result = await _mediator.Send(command);
-            return Ok(result);
-        }
-
-        // Visualizar evaluaciones
+        // Listar evaluaciones (todas las de grupos del instructor) - placeholder hasta implementar query específica
         [HttpGet("evaluations")]
-        public async Task<IActionResult> GetEvaluations([FromQuery] int? groupId)
+        public async Task<IActionResult> GetEvaluations()
         {
-            var query = new GetEvaluationsQuery(groupId);
+            // Se asume query futura GetEvaluationsForInstructorQuery
+            var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var query = new GetEvaluationsForInstructorQuery(instructorId);
             var result = await _mediator.Send(query);
             return Ok(result);
         }
 
-        // Validar evaluación
-        [HttpPost("evaluations/{evaluationId}/validate")]
-        public async Task<IActionResult> ValidateEvaluation(int evaluationId, [FromBody] ValidateEvaluationDto dto)
+        // Crear evaluación
+        [HttpPost("evaluations")]
+        public async Task<IActionResult> CreateEvaluation([FromBody] CreateEvaluationDto dto)
         {
-            var command = new ValidateEvaluationCommand(evaluationId, dto.IsValid, dto.Comments);
+            var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(instructorId)) return Unauthorized();
+            var command = new CreateEvaluationCommand(dto, instructorId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
 
-        // Visualizar ranking
-        [HttpGet("ranking")]
-        public async Task<IActionResult> GetRanking([FromQuery] int? groupId)
+        [HttpPost("evaluations/{evaluationId}/validate")]
+        public async Task<IActionResult> ValidateEvaluation(int evaluationId, [FromBody] ValidateEvaluationExtendedDto dto)
         {
-            var query = new GetRankingQuery(groupId);
+            var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(instructorId)) return Unauthorized();
+            var command = new ValidateEvaluationExtendedCommand(evaluationId, instructorId, dto.Score, dto.IsValid, dto.Comments, dto.Signature);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        // Ranking por grupos del instructor
+        [HttpGet("ranking")]
+        public async Task<IActionResult> GetRanking()
+        {
+            var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var query = new GetRankingForInstructorQuery(instructorId);
             var result = await _mediator.Send(query);
             return Ok(result);
         }
 
-        // Configurar parámetros de evaluación (intervalos por sensor, errores, tiempo)
+        // Actualizar parámetros de evaluación
         [HttpPut("groups/{groupId}/evaluation-parameters")]
         public async Task<IActionResult> UpdateEvaluationParameters(int groupId, [FromBody] EvaluationParametersDto dto)
         {
-            var command = new UpdateEvaluationParametersCommand(groupId, dto.SensorIntervals, dto.MaxErrors, dto.MaxTime);
+            var command = new UpsertEvaluationConfigCommand(groupId, dto.MaxErrors, dto.MaxTime, false);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
 
-        // Restablecer parámetros de evaluación
+        // Restablecer parámetros de evaluación a default
         [HttpPost("groups/{groupId}/evaluation-parameters/reset")]
         public async Task<IActionResult> ResetEvaluationParameters(int groupId)
         {
-            var command = new ResetEvaluationParametersCommand(groupId);
-            var result = await _mediator.Send(command);
-            return Ok(result);
-        }
-
-        // Asignar practicante a evaluación
-        [HttpPost("evaluations/{evaluationId}/practitioners")]
-        public async Task<IActionResult> AssignPractitionerToEvaluation(int evaluationId, [FromBody] AssignPractitionerDto dto)
-        {
-            var command = new AssignPractitionerToEvaluationCommand(evaluationId, dto.PractitionerIds);
-            var result = await _mediator.Send(command);
-            return Ok(result);
-        }
-
-        // Desasignar practicante de evaluación
-        [HttpDelete("evaluations/{evaluationId}/practitioners/{practitionerId}")]
-        public async Task<IActionResult> RemovePractitionerFromEvaluation(int evaluationId, string practitionerId)
-        {
-            var command = new RemovePractitionerFromEvaluationCommand(evaluationId, practitionerId);
+            var command = new ResetEvaluationConfigCommand(groupId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }

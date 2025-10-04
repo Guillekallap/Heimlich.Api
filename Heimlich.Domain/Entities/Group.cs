@@ -8,6 +8,5 @@
         public DateTime CreationDate { get; set; }
         public string Status { get; set; }
         public ICollection<UserGroup> UserGroups { get; set; }
-        public ICollection<PracticeSession> PracticeSessions { get; set; }
     }
 }

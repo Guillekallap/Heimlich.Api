@@ -26,17 +26,18 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             if (evaluation.EvaluatedUserId != request.PractitionerId)
                 throw new InvalidOperationException("El practicante ya ha sido desasignado o no pertenece a la evaluación.");
 
-            evaluation.EvaluatedUserId = null;
+            evaluation.EvaluatedUserId = null; // permitir null temporalmente
             await _context.SaveChangesAsync(cancellationToken);
 
             return new EvaluationDto
             {
                 Id = evaluation.Id,
-                PracticeSessionId = evaluation.PracticeSessionId,
+                EvaluatorId = evaluation.EvaluatorId,
                 EvaluatedUserId = evaluation.EvaluatedUserId,
                 Score = evaluation.Score,
                 Comments = evaluation.Comments,
-                IsValid = evaluation.IsValid
+                IsValid = evaluation.IsValid,
+                State = evaluation.State
             };
         }
     }

@@ -18,18 +18,39 @@ namespace Heimlich.Application.Features.Groups.Handlers
         public async Task<GroupDto> Handle(ResetEvaluationParametersCommand request, CancellationToken cancellationToken)
         {
             var group = await _context.Groups
-                .Include(g => g.PracticeSessions)
+                .Include(g => g.UserGroups)
                 .FirstOrDefaultAsync(g => g.Id == request.GroupId, cancellationToken);
 
             if (group == null)
                 throw new InvalidOperationException("El grupo no existe.");
 
-            // Restablecer valores predeterminados
-            // group.EvaluationParameters = new EvaluationParameters { ... };
-            // await _context.SaveChangesAsync(cancellationToken);
-
-            // Simulación de guardado
-            await Task.CompletedTask;
+            // Buscar configuración default (IsDefault = true) y asignarla / crear si no existe
+            var defaultConfig = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.IsDefault, cancellationToken);
+            if (defaultConfig == null)
+            {
+                defaultConfig = new Domain.Entities.EvaluationConfig
+                {
+                    GroupId = group.Id,
+                    MaxErrors = 0,
+                    MaxTime = 0,
+                    IsDefault = true
+                };
+                _context.EvaluationConfigs.Add(defaultConfig);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            else if (defaultConfig.GroupId != group.Id)
+            {
+                // Clonar la config default global para este grupo
+                var cloned = new Domain.Entities.EvaluationConfig
+                {
+                    GroupId = group.Id,
+                    MaxErrors = defaultConfig.MaxErrors,
+                    MaxTime = defaultConfig.MaxTime,
+                    IsDefault = false
+                };
+                _context.EvaluationConfigs.Add(cloned);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
 
             return new GroupDto
             {

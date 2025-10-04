@@ -8,15 +8,6 @@ namespace Heimlich.Application.Mapping
     {
         public AutoMapperProfile()
         {
-            // PracticeSession
-            CreateMap<PracticeSession, PracticeSessionDto>().ReverseMap();
-            CreateMap<PracticeSession, CancelPracticeSessionDto>();
-            CreateMap<CreatePracticeSessionDto, PracticeSession>()
-                .ForMember(dest => dest.Measurements, opt => opt.Ignore())
-                .ForMember(dest => dest.Evaluations, opt => opt.Ignore())
-                .ForMember(dest => dest.PractitionerId, opt => opt.Ignore())
-                .ForMember(dest => dest.PracticeType, opt => opt.Ignore());
-
             // Group
             CreateMap<Group, GroupDto>()
                 .ForMember(dest => dest.PractitionerIds, opt => opt.MapFrom(src => src.UserGroups.Select(ug => ug.UserId).ToList()));

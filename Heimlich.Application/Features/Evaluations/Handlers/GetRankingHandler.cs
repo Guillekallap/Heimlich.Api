@@ -1,5 +1,4 @@
 ﻿using Heimlich.Application.DTOs;
-using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -17,22 +16,14 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
         public async Task<List<RankingDto>> Handle(GetRankingQuery request, CancellationToken cancellationToken)
         {
-            var query = _context.Evaluations
-                .Include(e => e.PracticeSession)
-                .AsQueryable();
-
-            if (request.GroupId.HasValue)
-            {
-                query = query.Where(e => e.PracticeSession.GroupId == request.GroupId.Value
-                                      && e.PracticeSession.PracticeType == PracticeTypeEnum.Evaluation);
-            }
+            var query = _context.Evaluations.AsQueryable();
 
             var rankings = await query
                 .GroupBy(e => e.EvaluatedUserId)
                 .Select(g => new RankingDto
                 {
                     UserId = g.Key,
-                    AverageScore = g.Average(e => e.Score),
+                    AverageScore = g.Average(e => e.Score ?? 0),
                     EvaluationCount = g.Count()
                 }).ToListAsync(cancellationToken);
 
