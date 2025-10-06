@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,6 @@ var connectionString = config.GetConnectionString("DefaultConnection")
 builder.Services.AddDbContext<HeimlichDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Registro de Identity
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<HeimlichDbContext>()
     .AddDefaultTokenProviders();
@@ -53,7 +53,12 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+    {
+        // Permitir enums como strings en JSON (ForceSensor, TouchSensor, etc.)
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -87,11 +92,11 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddSingleton(provider =>
 {
-    var config = new MapperConfiguration(cfg =>
+    var configMapper = new MapperConfiguration(cfg =>
     {
         cfg.AddProfile(new AutoMapperProfile());
     });
-    return config.CreateMapper();
+    return configMapper.CreateMapper();
 });
 
 var app = builder.Build();

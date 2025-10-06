@@ -1,5 +1,6 @@
 using Heimlich.Application.DTOs;
 using MediatR;
+
 namespace Heimlich.Application.Features.Groups.Commands
 {
     public class UpdateEvaluationParametersCommand : IRequest<GroupDto>

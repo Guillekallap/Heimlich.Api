@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Heimlich.Domain.Enums;
 
 namespace Heimlich.Application.DTOs

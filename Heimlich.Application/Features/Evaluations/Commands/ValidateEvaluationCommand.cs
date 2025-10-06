@@ -1,5 +1,5 @@
-using MediatR;
 using Heimlich.Application.DTOs;
+using MediatR;
 
 public class ValidateEvaluationCommand : IRequest<EvaluationDto>
 {

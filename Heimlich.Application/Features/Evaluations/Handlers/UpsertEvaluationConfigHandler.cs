@@ -23,6 +23,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                     GroupId = request.GroupId,
                     MaxErrors = request.MaxErrors,
                     MaxTime = request.MaxTime,
+                    Name = request.Name,
                     IsDefault = request.IsDefault
                 };
                 _context.EvaluationConfigs.Add(config);
@@ -31,6 +32,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             {
                 config.MaxErrors = request.MaxErrors;
                 config.MaxTime = request.MaxTime;
+                config.Name = request.Name;
                 config.IsDefault = request.IsDefault;
             }
             await _context.SaveChangesAsync(cancellationToken);

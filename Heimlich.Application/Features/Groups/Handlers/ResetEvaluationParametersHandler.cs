@@ -31,8 +31,8 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 defaultConfig = new Domain.Entities.EvaluationConfig
                 {
                     GroupId = group.Id,
-                    MaxErrors = 0,
-                    MaxTime = 0,
+                    MaxErrors = 10,
+                    MaxTime = 30,
                     IsDefault = true
                 };
                 _context.EvaluationConfigs.Add(defaultConfig);

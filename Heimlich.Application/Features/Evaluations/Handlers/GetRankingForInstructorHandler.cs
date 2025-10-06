@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Evaluations.Queries;
 using Heimlich.Infrastructure.Identity;
@@ -13,7 +9,9 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
     public class GetRankingForInstructorHandler : IRequestHandler<GetRankingForInstructorQuery, IEnumerable<RankingDto>>
     {
         private readonly HeimlichDbContext _context;
-        public GetRankingForInstructorHandler(HeimlichDbContext context) { _context = context; }
+
+        public GetRankingForInstructorHandler(HeimlichDbContext context)
+        { _context = context; }
 
         public async Task<IEnumerable<RankingDto>> Handle(GetRankingForInstructorQuery request, CancellationToken cancellationToken)
         {

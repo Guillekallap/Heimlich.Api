@@ -65,13 +65,23 @@ namespace Heimlich.Api.Controllers
             return Ok(result);
         }
 
-        // Crear evaluación
-        [HttpPost("evaluations")]
+        // Crear evaluación normal o cancelada (cancel=true)
+        [HttpPost("evaluations/create")]
         public async Task<IActionResult> CreateEvaluation([FromBody] CreateEvaluationDto dto)
         {
             var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(instructorId)) return Unauthorized();
             var command = new CreateEvaluationCommand(dto, instructorId);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        [HttpPost("evaluations/cancel")]
+        public async Task<IActionResult> CancelEvaluation([FromBody] CreateEvaluationDto dto)
+        {
+            var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(instructorId)) return Unauthorized();
+            var command = new CancelEvaluationImmediateCommand(dto, instructorId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -100,7 +110,7 @@ namespace Heimlich.Api.Controllers
         [HttpPut("groups/{groupId}/evaluation-parameters")]
         public async Task<IActionResult> UpdateEvaluationParameters(int groupId, [FromBody] EvaluationParametersDto dto)
         {
-            var command = new UpsertEvaluationConfigCommand(groupId, dto.MaxErrors, dto.MaxTime, false);
+            var command = new UpsertEvaluationConfigCommand(groupId, dto.MaxErrors, dto.MaxTime, dto.Name, false);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -112,6 +122,16 @@ namespace Heimlich.Api.Controllers
             var command = new ResetEvaluationConfigCommand(groupId);
             var result = await _mediator.Send(command);
             return Ok(result);
+        }
+
+        // Eliminar configuración de evaluación no default
+        [HttpDelete("groups/{groupId}/evaluation-parameters")]
+        public async Task<IActionResult> DeleteEvaluationParameters(int groupId)
+        {
+            var command = new DeleteEvaluationConfigCommand(groupId);
+            var result = await _mediator.Send(command);
+            if (!result) return NotFound();
+            return NoContent();
         }
     }
 }

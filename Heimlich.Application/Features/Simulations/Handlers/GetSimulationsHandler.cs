@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Simulations.Queries;
+using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ namespace Heimlich.Application.Features.Simulations.Handlers
         public async Task<IEnumerable<SimulationSessionDto>> Handle(GetSimulationsQuery request, CancellationToken cancellationToken)
         {
             var sims = await _context.Simulations
-                .Where(s => s.PractitionerId == request.PractitionerId)
+                .Where(s => s.PractitionerId == request.PractitionerId && s.State != SessionStateEnum.Cancelled)
                 .Include(s => s.Measurements)
                 .OrderByDescending(s => s.CreationDate)
                 .ToListAsync(cancellationToken);

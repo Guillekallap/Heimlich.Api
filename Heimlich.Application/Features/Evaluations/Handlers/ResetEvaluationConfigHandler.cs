@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Domain.Entities;
 using Heimlich.Infrastructure.Identity;
@@ -11,7 +9,9 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
     public class ResetEvaluationConfigHandler : IRequestHandler<ResetEvaluationConfigCommand, EvaluationConfig>
     {
         private readonly HeimlichDbContext _context;
-        public ResetEvaluationConfigHandler(HeimlichDbContext context) { _context = context; }
+
+        public ResetEvaluationConfigHandler(HeimlichDbContext context)
+        { _context = context; }
 
         public async Task<EvaluationConfig> Handle(ResetEvaluationConfigCommand request, CancellationToken cancellationToken)
         {
@@ -21,16 +21,18 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 config = new EvaluationConfig
                 {
                     GroupId = request.GroupId,
-                    MaxErrors = 0,
-                    MaxTime = 0,
+                    MaxErrors = 10,
+                    MaxTime = 30,
+                    Name = "Default",
                     IsDefault = true
                 };
                 _context.EvaluationConfigs.Add(config);
             }
             else
             {
-                config.MaxErrors = 0;
-                config.MaxTime = 0;
+                config.MaxErrors = 10;
+                config.MaxTime = 30;
+                config.Name = "Default";
                 config.IsDefault = true;
             }
             await _context.SaveChangesAsync(cancellationToken);

@@ -14,6 +14,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
         {
             _context = context;
         }
+
         public async Task<GroupDto> Handle(RemovePractitionerFromGroupCommand request, CancellationToken cancellationToken)
         {
             var group = await _context.Groups

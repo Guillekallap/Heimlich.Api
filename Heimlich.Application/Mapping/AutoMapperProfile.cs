@@ -1,6 +1,6 @@
 using AutoMapper;
-using Heimlich.Domain.Entities;
 using Heimlich.Application.DTOs;
+using Heimlich.Domain.Entities;
 
 namespace Heimlich.Application.Mapping
 {

@@ -7,40 +7,25 @@ using MediatR;
 
 namespace Heimlich.Application.Features.Simulations.Handlers
 {
-    public class CreateSimulationHandler : IRequestHandler<CreateSimulationCommand, SimulationSessionDto>
+    public class CancelSimulationImmediateHandler : IRequestHandler<CancelSimulationImmediateCommand, SimulationSessionDto>
     {
         private readonly HeimlichDbContext _context;
 
-        public CreateSimulationHandler(HeimlichDbContext context)
+        public CancelSimulationImmediateHandler(HeimlichDbContext context)
         { _context = context; }
 
-        public async Task<SimulationSessionDto> Handle(CreateSimulationCommand request, CancellationToken cancellationToken)
+        public async Task<SimulationSessionDto> Handle(CancelSimulationImmediateCommand request, CancellationToken cancellationToken)
         {
             var dto = request.Dto;
-            if (dto == null) throw new System.ArgumentNullException(nameof(request.Dto));
             if (dto.TrunkId <= 0) throw new System.ArgumentException("TrunkId inválido");
-            if (string.IsNullOrEmpty(request.PractitionerId)) throw new System.ArgumentException("PractitionerId requerido");
-            if (dto.Samples == null || dto.Samples.Count == 0) throw new System.ArgumentException("Samples requeridos");
-
-            foreach (var sample in dto.Samples)
-            {
-                foreach (var metric in sample.Metrics)
-                {
-                    if (!System.Enum.IsDefined(typeof(MetricTypeEnum), metric.MetricType))
-                        throw new System.ArgumentException($"MetricType inválido: {metric.MetricType}");
-                }
-            }
-
-            var orderedSamples = dto.Samples.OrderBy(s => s.ElapsedMs).ToList();
-
             var simulation = new Simulation
             {
                 PractitionerId = request.PractitionerId,
                 TrunkId = dto.TrunkId,
-                State = SessionStateEnum.Active
+                State = SessionStateEnum.Cancelled
             };
-
-            foreach (var sample in orderedSamples)
+            var ordered = dto.Samples?.OrderBy(s => s.ElapsedMs).ToList() ?? new();
+            foreach (var sample in ordered)
             {
                 foreach (var metric in sample.Metrics)
                 {
@@ -55,16 +40,11 @@ namespace Heimlich.Application.Features.Simulations.Handlers
                     });
                 }
             }
-
-            var totalErrors = simulation.Measurements.Count(m => !m.IsValid);
-            var duration = orderedSamples.Max(s => (long?)s.ElapsedMs) ?? 0;
-            simulation.TotalErrors = dto.Result?.TotalErrors ?? totalErrors;
-            simulation.TotalDurationMs = dto.Result?.TotalDurationMs ?? duration;
-            simulation.AverageErrorsPerMeasurement = dto.Result?.AverageErrorsPerSample ?? (simulation.Measurements.Count == 0 ? 0 : (double)totalErrors / orderedSamples.Count);
-            simulation.IsValid = dto.Result?.IsValid ?? (totalErrors == 0);
-            simulation.Comments = dto.Result?.Comments; // puede quedar null
-            simulation.EndDate = simulation.TotalDurationMs.HasValue ? simulation.CreationDate.AddMilliseconds(simulation.TotalDurationMs.Value) : null;
-
+            simulation.TotalErrors = simulation.Measurements.Count(m => !m.IsValid);
+            simulation.TotalDurationMs = ordered.Count == 0 ? 0 : ordered.Max(s => (long?)s.ElapsedMs) ?? 0;
+            simulation.AverageErrorsPerMeasurement = ordered.Count == 0 ? 0 : (double)simulation.TotalErrors / ordered.Count;
+            simulation.IsValid = simulation.TotalErrors == 0;
+            simulation.EndDate = DateTime.UtcNow;
             _context.Simulations.Add(simulation);
             await _context.SaveChangesAsync(cancellationToken);
 

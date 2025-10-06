@@ -17,7 +17,7 @@ namespace Heimlich.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.17")
+                .HasAnnotation("ProductVersion", "8.0.19")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -34,6 +34,9 @@ namespace Heimlich.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("EvaluatedUserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -42,14 +45,24 @@ namespace Heimlich.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<bool>("IsValid")
+                    b.Property<bool?>("IsValid")
                         .HasColumnType("bit");
 
-                    b.Property<int>("PracticeSessionId")
+                    b.Property<double?>("Score")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Signature")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("State")
                         .HasColumnType("int");
 
-                    b.Property<double>("Score")
-                        .HasColumnType("float");
+                    b.Property<int?>("TrunkId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ValidatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -57,9 +70,43 @@ namespace Heimlich.Infrastructure.Migrations
 
                     b.HasIndex("EvaluatorId");
 
-                    b.HasIndex("PracticeSessionId");
+                    b.HasIndex("TrunkId");
 
                     b.ToTable("Evaluations");
+                });
+
+            modelBuilder.Entity("Heimlich.Domain.Entities.EvaluationConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxErrors")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxTime")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.ToTable("EvaluationConfigs");
                 });
 
             modelBuilder.Entity("Heimlich.Domain.Entities.Group", b =>
@@ -98,13 +145,19 @@ namespace Heimlich.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<long?>("ElapsedMs")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("EvaluationId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsValid")
                         .HasColumnType("bit");
 
                     b.Property<int>("MetricType")
                         .HasColumnType("int");
 
-                    b.Property<int>("PracticeSessionId")
+                    b.Property<int?>("SimulationId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Time")
@@ -116,12 +169,17 @@ namespace Heimlich.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PracticeSessionId");
+                    b.HasIndex("EvaluationId");
 
-                    b.ToTable("Measurements");
+                    b.HasIndex("SimulationId");
+
+                    b.ToTable("Measurements", t =>
+                        {
+                            t.HasCheckConstraint("CK_Measurement_Owner", "(CASE WHEN [SimulationId] IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN [EvaluationId] IS NOT NULL THEN 1 ELSE 0 END) = 1");
+                        });
                 });
 
-            modelBuilder.Entity("Heimlich.Domain.Entities.PracticeSession", b =>
+            modelBuilder.Entity("Heimlich.Domain.Entities.Simulation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -129,31 +187,45 @@ namespace Heimlich.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<double?>("AverageErrorsPerMeasurement")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Comments")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("GroupId")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<int>("PracticeType")
-                        .HasColumnType("int");
+                    b.Property<bool?>("IsValid")
+                        .HasColumnType("bit");
 
                     b.Property<string>("PractitionerId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("TrunkId")
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("TotalDurationMs")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("TotalErrors")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TrunkId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
 
                     b.HasIndex("PractitionerId");
 
                     b.HasIndex("TrunkId");
 
-                    b.ToTable("PracticeSessions");
+                    b.ToTable("Simulations");
                 });
 
             modelBuilder.Entity("Heimlich.Domain.Entities.Trunk", b =>
@@ -402,52 +474,63 @@ namespace Heimlich.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Heimlich.Domain.Entities.User", "Evaluator")
-                        .WithMany()
+                        .WithMany("EvaluationsAuthored")
                         .HasForeignKey("EvaluatorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Heimlich.Domain.Entities.PracticeSession", "PracticeSession")
+                    b.HasOne("Heimlich.Domain.Entities.Trunk", "Trunk")
                         .WithMany("Evaluations")
-                        .HasForeignKey("PracticeSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TrunkId");
 
                     b.Navigation("EvaluatedUser");
 
                     b.Navigation("Evaluator");
 
-                    b.Navigation("PracticeSession");
+                    b.Navigation("Trunk");
+                });
+
+            modelBuilder.Entity("Heimlich.Domain.Entities.EvaluationConfig", b =>
+                {
+                    b.HasOne("Heimlich.Domain.Entities.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
                 });
 
             modelBuilder.Entity("Heimlich.Domain.Entities.Measurement", b =>
                 {
-                    b.HasOne("Heimlich.Domain.Entities.PracticeSession", "PracticeSession")
+                    b.HasOne("Heimlich.Domain.Entities.Evaluation", "Evaluation")
                         .WithMany("Measurements")
-                        .HasForeignKey("PracticeSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("EvaluationId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("PracticeSession");
+                    b.HasOne("Heimlich.Domain.Entities.Simulation", "Simulation")
+                        .WithMany("Measurements")
+                        .HasForeignKey("SimulationId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Evaluation");
+
+                    b.Navigation("Simulation");
                 });
 
-            modelBuilder.Entity("Heimlich.Domain.Entities.PracticeSession", b =>
+            modelBuilder.Entity("Heimlich.Domain.Entities.Simulation", b =>
                 {
-                    b.HasOne("Heimlich.Domain.Entities.Group", "Group")
-                        .WithMany("PracticeSessions")
-                        .HasForeignKey("GroupId");
-
                     b.HasOne("Heimlich.Domain.Entities.User", "Practitioner")
-                        .WithMany("PracticeSessions")
+                        .WithMany("Simulations")
                         .HasForeignKey("PractitionerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Heimlich.Domain.Entities.Trunk", "Trunk")
-                        .WithMany("Sessions")
-                        .HasForeignKey("TrunkId");
-
-                    b.Navigation("Group");
+                        .WithMany("Simulations")
+                        .HasForeignKey("TrunkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Practitioner");
 
@@ -524,28 +607,33 @@ namespace Heimlich.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Heimlich.Domain.Entities.Evaluation", b =>
+                {
+                    b.Navigation("Measurements");
+                });
+
             modelBuilder.Entity("Heimlich.Domain.Entities.Group", b =>
                 {
-                    b.Navigation("PracticeSessions");
-
                     b.Navigation("UserGroups");
                 });
 
-            modelBuilder.Entity("Heimlich.Domain.Entities.PracticeSession", b =>
+            modelBuilder.Entity("Heimlich.Domain.Entities.Simulation", b =>
                 {
-                    b.Navigation("Evaluations");
-
                     b.Navigation("Measurements");
                 });
 
             modelBuilder.Entity("Heimlich.Domain.Entities.Trunk", b =>
                 {
-                    b.Navigation("Sessions");
+                    b.Navigation("Evaluations");
+
+                    b.Navigation("Simulations");
                 });
 
             modelBuilder.Entity("Heimlich.Domain.Entities.User", b =>
                 {
-                    b.Navigation("PracticeSessions");
+                    b.Navigation("EvaluationsAuthored");
+
+                    b.Navigation("Simulations");
 
                     b.Navigation("UserGroups");
                 });

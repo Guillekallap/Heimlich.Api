@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Domain.Entities;
@@ -7,14 +9,12 @@ using MediatR;
 
 namespace Heimlich.Application.Features.Evaluations.Handlers
 {
-    public class CreateEvaluationHandler : IRequestHandler<CreateEvaluationCommand, EvaluationDto>
+    public class CancelEvaluationImmediateHandler : IRequestHandler<CancelEvaluationImmediateCommand, EvaluationDto>
     {
         private readonly HeimlichDbContext _context;
+        public CancelEvaluationImmediateHandler(HeimlichDbContext context) { _context = context; }
 
-        public CreateEvaluationHandler(HeimlichDbContext context)
-        { _context = context; }
-
-        public async Task<EvaluationDto> Handle(CreateEvaluationCommand request, CancellationToken cancellationToken)
+        public async Task<EvaluationDto> Handle(CancelEvaluationImmediateCommand request, CancellationToken cancellationToken)
         {
             var dto = request.Dto;
             var evaluation = new Evaluation
@@ -23,25 +23,25 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 EvaluatedUserId = dto.EvaluatedUserId,
                 TrunkId = dto.TrunkId,
                 Comments = dto.Comments,
-                State = SessionStateEnum.Active
+                State = SessionStateEnum.Cancelled
             };
-
-            foreach (var m in dto.Measurements)
+            if (dto.Measurements != null)
             {
-                evaluation.Measurements.Add(new Measurement
+                foreach (var m in dto.Measurements)
                 {
-                    Evaluation = evaluation,
-                    MetricType = m.MetricType,
-                    Value = m.Value,
-                    IsValid = m.IsValid,
-                    ElapsedMs = m.ElapsedMs,
-                    Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs ?? 0)
-                });
+                    evaluation.Measurements.Add(new Measurement
+                    {
+                        Evaluation = evaluation,
+                        MetricType = m.MetricType,
+                        Value = m.Value,
+                        IsValid = m.IsValid,
+                        ElapsedMs = m.ElapsedMs,
+                        Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs ?? 0)
+                    });
+                }
             }
-
             _context.Evaluations.Add(evaluation);
             await _context.SaveChangesAsync(cancellationToken);
-
             return new EvaluationDto
             {
                 Id = evaluation.Id,

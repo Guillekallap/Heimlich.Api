@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Heimlich.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class RefactorSimulationEvaluationSplit : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -188,6 +188,30 @@ namespace Heimlich.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "EvaluationConfigs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    GroupId = table.Column<int>(type: "int", nullable: false),
+                    MaxErrors = table.Column<int>(type: "int", nullable: false),
+                    MaxTime = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsDefault = table.Column<bool>(type: "bit", nullable: false),
+                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EvaluationConfigs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EvaluationConfigs_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserGroups",
                 columns: table => new
                 {
@@ -212,50 +236,21 @@ namespace Heimlich.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PracticeSessions",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PractitionerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    PracticeType = table.Column<int>(type: "int", nullable: false),
-                    TrunkId = table.Column<int>(type: "int", nullable: true),
-                    GroupId = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PracticeSessions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PracticeSessions_AspNetUsers_PractitionerId",
-                        column: x => x.PractitionerId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PracticeSessions_Groups_GroupId",
-                        column: x => x.GroupId,
-                        principalTable: "Groups",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_PracticeSessions_Torsos_TrunkId",
-                        column: x => x.TrunkId,
-                        principalTable: "Torsos",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Evaluations",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PracticeSessionId = table.Column<int>(type: "int", nullable: false),
                     EvaluatorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     EvaluatedUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Score = table.Column<double>(type: "float", nullable: false),
+                    TrunkId = table.Column<int>(type: "int", nullable: true),
+                    Score = table.Column<double>(type: "float", nullable: true),
                     Comments = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsValid = table.Column<bool>(type: "bit", nullable: false)
+                    IsValid = table.Column<bool>(type: "bit", nullable: true),
+                    Signature = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    State = table.Column<int>(type: "int", nullable: false),
+                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ValidatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -273,9 +268,42 @@ namespace Heimlich.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Evaluations_PracticeSessions_PracticeSessionId",
-                        column: x => x.PracticeSessionId,
-                        principalTable: "PracticeSessions",
+                        name: "FK_Evaluations_Torsos_TrunkId",
+                        column: x => x.TrunkId,
+                        principalTable: "Torsos",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Simulations",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    PractitionerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TrunkId = table.Column<int>(type: "int", nullable: false),
+                    TotalDurationMs = table.Column<long>(type: "bigint", nullable: true),
+                    TotalErrors = table.Column<int>(type: "int", nullable: true),
+                    AverageErrorsPerMeasurement = table.Column<double>(type: "float", nullable: true),
+                    IsValid = table.Column<bool>(type: "bit", nullable: true),
+                    Comments = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    State = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Simulations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Simulations_AspNetUsers_PractitionerId",
+                        column: x => x.PractitionerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Simulations_Torsos_TrunkId",
+                        column: x => x.TrunkId,
+                        principalTable: "Torsos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -286,8 +314,10 @@ namespace Heimlich.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PracticeSessionId = table.Column<int>(type: "int", nullable: false),
+                    SimulationId = table.Column<int>(type: "int", nullable: true),
+                    EvaluationId = table.Column<int>(type: "int", nullable: true),
                     Time = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ElapsedMs = table.Column<long>(type: "bigint", nullable: true),
                     MetricType = table.Column<int>(type: "int", nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsValid = table.Column<bool>(type: "bit", nullable: false)
@@ -295,10 +325,17 @@ namespace Heimlich.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Measurements", x => x.Id);
+                    table.CheckConstraint("CK_Measurement_Owner", "(CASE WHEN [SimulationId] IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN [EvaluationId] IS NOT NULL THEN 1 ELSE 0 END) = 1");
                     table.ForeignKey(
-                        name: "FK_Measurements_PracticeSessions_PracticeSessionId",
-                        column: x => x.PracticeSessionId,
-                        principalTable: "PracticeSessions",
+                        name: "FK_Measurements_Evaluations_EvaluationId",
+                        column: x => x.EvaluationId,
+                        principalTable: "Evaluations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Measurements_Simulations_SimulationId",
+                        column: x => x.SimulationId,
+                        principalTable: "Simulations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -343,6 +380,11 @@ namespace Heimlich.Infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_EvaluationConfigs_GroupId",
+                table: "EvaluationConfigs",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Evaluations_EvaluatedUserId",
                 table: "Evaluations",
                 column: "EvaluatedUserId");
@@ -353,28 +395,28 @@ namespace Heimlich.Infrastructure.Migrations
                 column: "EvaluatorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Evaluations_PracticeSessionId",
+                name: "IX_Evaluations_TrunkId",
                 table: "Evaluations",
-                column: "PracticeSessionId");
+                column: "TrunkId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Measurements_PracticeSessionId",
+                name: "IX_Measurements_EvaluationId",
                 table: "Measurements",
-                column: "PracticeSessionId");
+                column: "EvaluationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PracticeSessions_GroupId",
-                table: "PracticeSessions",
-                column: "GroupId");
+                name: "IX_Measurements_SimulationId",
+                table: "Measurements",
+                column: "SimulationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PracticeSessions_PractitionerId",
-                table: "PracticeSessions",
+                name: "IX_Simulations_PractitionerId",
+                table: "Simulations",
                 column: "PractitionerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PracticeSessions_TrunkId",
-                table: "PracticeSessions",
+                name: "IX_Simulations_TrunkId",
+                table: "Simulations",
                 column: "TrunkId");
 
             migrationBuilder.CreateIndex(
@@ -402,7 +444,7 @@ namespace Heimlich.Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Evaluations");
+                name: "EvaluationConfigs");
 
             migrationBuilder.DropTable(
                 name: "Measurements");
@@ -414,13 +456,16 @@ namespace Heimlich.Infrastructure.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "PracticeSessions");
+                name: "Evaluations");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
+                name: "Simulations");
 
             migrationBuilder.DropTable(
                 name: "Groups");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "Torsos");

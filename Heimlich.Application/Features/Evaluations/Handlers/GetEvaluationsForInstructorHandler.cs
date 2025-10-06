@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Evaluations.Queries;
+using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
         public async Task<IEnumerable<EvaluationDto>> Handle(GetEvaluationsForInstructorQuery request, CancellationToken cancellationToken)
         {
             var evals = await _context.Evaluations
-                .Where(e => e.EvaluatorId == request.InstructorId)
+                .Where(e => e.EvaluatorId == request.InstructorId && e.State != SessionStateEnum.Cancelled)
                 .OrderByDescending(e => e.CreationDate)
                 .ToListAsync(cancellationToken);
             return evals.Select(e => new EvaluationDto
