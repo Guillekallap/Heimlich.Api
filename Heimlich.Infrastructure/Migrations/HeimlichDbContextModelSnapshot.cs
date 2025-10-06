@@ -31,19 +31,23 @@ namespace Heimlich.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Comments")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("EvaluatedUserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("EvaluationConfigId")
+                        .HasColumnType("int");
 
                     b.Property<string>("EvaluatorId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("GroupId")
+                        .HasColumnType("int");
 
                     b.Property<bool?>("IsValid")
                         .HasColumnType("bit");
@@ -52,7 +56,6 @@ namespace Heimlich.Infrastructure.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("Signature")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("State")
@@ -68,7 +71,11 @@ namespace Heimlich.Infrastructure.Migrations
 
                     b.HasIndex("EvaluatedUserId");
 
+                    b.HasIndex("EvaluationConfigId");
+
                     b.HasIndex("EvaluatorId");
+
+                    b.HasIndex("GroupId");
 
                     b.HasIndex("TrunkId");
 
@@ -86,7 +93,7 @@ namespace Heimlich.Infrastructure.Migrations
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("GroupId")
+                    b.Property<int?>("GroupId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDefault")
@@ -100,13 +107,31 @@ namespace Heimlich.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("GroupId");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("EvaluationConfigs");
+                });
+
+            modelBuilder.Entity("Heimlich.Domain.Entities.EvaluationConfigGroup", b =>
+                {
+                    b.Property<int>("EvaluationConfigId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.HasKey("EvaluationConfigId", "GroupId");
+
+                    b.HasIndex("GroupId");
+
+                    b.ToTable("EvaluationConfigGroups");
                 });
 
             modelBuilder.Entity("Heimlich.Domain.Entities.Group", b =>
@@ -128,11 +153,16 @@ namespace Heimlich.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("OwnerInstructorId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OwnerInstructorId");
 
                     b.ToTable("Groups");
                 });
@@ -191,7 +221,6 @@ namespace Heimlich.Infrastructure.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("Comments")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreationDate")
@@ -242,7 +271,7 @@ namespace Heimlich.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Torsos");
+                    b.ToTable("Trunks");
                 });
 
             modelBuilder.Entity("Heimlich.Domain.Entities.User", b =>
@@ -470,8 +499,12 @@ namespace Heimlich.Infrastructure.Migrations
                     b.HasOne("Heimlich.Domain.Entities.User", "EvaluatedUser")
                         .WithMany()
                         .HasForeignKey("EvaluatedUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Heimlich.Domain.Entities.EvaluationConfig", "EvaluationConfig")
+                        .WithMany()
+                        .HasForeignKey("EvaluationConfigId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Heimlich.Domain.Entities.User", "Evaluator")
                         .WithMany("EvaluationsAuthored")
@@ -479,13 +512,22 @@ namespace Heimlich.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Heimlich.Domain.Entities.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Heimlich.Domain.Entities.Trunk", "Trunk")
                         .WithMany("Evaluations")
                         .HasForeignKey("TrunkId");
 
                     b.Navigation("EvaluatedUser");
 
+                    b.Navigation("EvaluationConfig");
+
                     b.Navigation("Evaluator");
+
+                    b.Navigation("Group");
 
                     b.Navigation("Trunk");
                 });
@@ -495,10 +537,39 @@ namespace Heimlich.Infrastructure.Migrations
                     b.HasOne("Heimlich.Domain.Entities.Group", "Group")
                         .WithMany()
                         .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("Heimlich.Domain.Entities.EvaluationConfigGroup", b =>
+                {
+                    b.HasOne("Heimlich.Domain.Entities.EvaluationConfig", "EvaluationConfig")
+                        .WithMany("EvaluationConfigGroups")
+                        .HasForeignKey("EvaluationConfigId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Heimlich.Domain.Entities.Group", "Group")
+                        .WithMany("EvaluationConfigGroups")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("EvaluationConfig");
+
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("Heimlich.Domain.Entities.Group", b =>
+                {
+                    b.HasOne("Heimlich.Domain.Entities.User", "OwnerInstructor")
+                        .WithMany()
+                        .HasForeignKey("OwnerInstructorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Group");
+                    b.Navigation("OwnerInstructor");
                 });
 
             modelBuilder.Entity("Heimlich.Domain.Entities.Measurement", b =>
@@ -523,7 +594,7 @@ namespace Heimlich.Infrastructure.Migrations
                     b.HasOne("Heimlich.Domain.Entities.User", "Practitioner")
                         .WithMany("Simulations")
                         .HasForeignKey("PractitionerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Heimlich.Domain.Entities.Trunk", "Trunk")
@@ -548,7 +619,7 @@ namespace Heimlich.Infrastructure.Migrations
                     b.HasOne("Heimlich.Domain.Entities.User", "User")
                         .WithMany("UserGroups")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Group");
@@ -612,8 +683,15 @@ namespace Heimlich.Infrastructure.Migrations
                     b.Navigation("Measurements");
                 });
 
+            modelBuilder.Entity("Heimlich.Domain.Entities.EvaluationConfig", b =>
+                {
+                    b.Navigation("EvaluationConfigGroups");
+                });
+
             modelBuilder.Entity("Heimlich.Domain.Entities.Group", b =>
                 {
+                    b.Navigation("EvaluationConfigGroups");
+
                     b.Navigation("UserGroups");
                 });
 

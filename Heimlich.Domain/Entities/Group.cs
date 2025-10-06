@@ -9,6 +9,9 @@ namespace Heimlich.Domain.Entities
         public string Description { get; set; }
         public DateTime CreationDate { get; set; }
         public GroupStatusEnum Status { get; set; } = GroupStatusEnum.Active;
+        public string OwnerInstructorId { get; set; }
+        public User? OwnerInstructor { get; set; }
         public ICollection<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
+        public ICollection<EvaluationConfigGroup> EvaluationConfigGroups { get; set; } = new List<EvaluationConfigGroup>();
     }
 }

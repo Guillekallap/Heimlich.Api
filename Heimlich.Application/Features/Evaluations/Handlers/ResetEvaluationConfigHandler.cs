@@ -15,28 +15,33 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
         public async Task<EvaluationConfig> Handle(ResetEvaluationConfigCommand request, CancellationToken cancellationToken)
         {
-            var config = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.GroupId == request.GroupId, cancellationToken);
-            if (config == null)
+            var defaultConfig = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.IsDefault, cancellationToken);
+            if (defaultConfig == null)
             {
-                config = new EvaluationConfig
+                defaultConfig = new EvaluationConfig
                 {
-                    GroupId = request.GroupId,
+                    Name = "Default",
                     MaxErrors = 10,
                     MaxTime = 30,
-                    Name = "Default",
-                    IsDefault = true
+                    IsDefault = true,
+                    GroupId = null
                 };
-                _context.EvaluationConfigs.Add(config);
+                _context.EvaluationConfigs.Add(defaultConfig);
+                await _context.SaveChangesAsync(cancellationToken);
             }
-            else
+
+            var currentLink = await _context.EvaluationConfigGroups.FirstOrDefaultAsync(l => l.GroupId == request.GroupId, cancellationToken);
+            if (currentLink != null && currentLink.EvaluationConfigId != defaultConfig.Id)
             {
-                config.MaxErrors = 10;
-                config.MaxTime = 30;
-                config.Name = "Default";
-                config.IsDefault = true;
+                _context.EvaluationConfigGroups.Remove(currentLink);
+                await _context.SaveChangesAsync(cancellationToken);
             }
-            await _context.SaveChangesAsync(cancellationToken);
-            return config;
+            if (currentLink == null || currentLink.EvaluationConfigId != defaultConfig.Id)
+            {
+                _context.EvaluationConfigGroups.Add(new EvaluationConfigGroup { GroupId = request.GroupId, EvaluationConfigId = defaultConfig.Id });
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            return defaultConfig;
         }
     }
 }

@@ -2,7 +2,6 @@ using AutoMapper;
 using Heimlich.Application.Features.Auth.Handlers;
 using Heimlich.Application.Mapping;
 using Heimlich.Domain.Entities;
-using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -30,7 +29,6 @@ builder.Services.Configure<IdentityOptions>(options =>
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<RegisterHandler>());
 
-// Configuración correcta de JWT como esquema por defecto
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -107,16 +105,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Seed Roles
+// Seed roles + trunks (y futuros datos) de forma idempotente
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = Enum.GetNames(typeof(UserRoleEnum));
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-            await roleManager.CreateAsync(new IdentityRole(role));
-    }
+    var services = scope.ServiceProvider;
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = services.GetRequiredService<UserManager<User>>();
+    var context = services.GetRequiredService<HeimlichDbContext>();
+    SeedData.InitializeAsync(userManager, roleManager, context).GetAwaiter().GetResult();
 }
 
 app.UseHttpsRedirection();

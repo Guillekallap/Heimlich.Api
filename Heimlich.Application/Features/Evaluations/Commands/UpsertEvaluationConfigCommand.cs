@@ -1,5 +1,5 @@
-using MediatR;
 using Heimlich.Domain.Entities;
+using MediatR;
 
 namespace Heimlich.Application.Features.Evaluations.Commands
 {
@@ -10,6 +10,7 @@ namespace Heimlich.Application.Features.Evaluations.Commands
         public int MaxTime { get; }
         public string Name { get; }
         public bool IsDefault { get; }
+
         public UpsertEvaluationConfigCommand(int groupId, int maxErrors, int maxTime, string name, bool isDefault)
         {
             GroupId = groupId;

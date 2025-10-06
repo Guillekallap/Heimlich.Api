@@ -7,10 +7,14 @@ namespace Heimlich.Domain.Entities
         public int Id { get; set; }
         public string EvaluatorId { get; set; } // Instructor
         public User Evaluator { get; set; }
-        public string EvaluatedUserId { get; set; } // Practicante
-        public User EvaluatedUser { get; set; }
+        public string? EvaluatedUserId { get; set; } // Practicante (puede ser null inicialmente en evaluación automática)
+        public User? EvaluatedUser { get; set; }
         public int? TrunkId { get; set; }
         public Trunk? Trunk { get; set; }
+        public int? GroupId { get; set; }
+        public Group? Group { get; set; }
+        public int? EvaluationConfigId { get; set; }
+        public EvaluationConfig? EvaluationConfig { get; set; }
         public double? Score { get; set; }
         public string? Comments { get; set; }
         public bool? IsValid { get; set; }

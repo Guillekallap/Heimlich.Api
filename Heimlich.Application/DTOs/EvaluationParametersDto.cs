@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 public class EvaluationParametersDto
 {
     public List<SensorIntervalDto> SensorIntervals { get; set; }

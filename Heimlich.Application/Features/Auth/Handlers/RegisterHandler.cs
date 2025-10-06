@@ -1,7 +1,6 @@
 ﻿using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Auth.Commands;
 using Heimlich.Domain.Entities;
-using Heimlich.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 

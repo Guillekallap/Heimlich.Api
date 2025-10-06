@@ -17,10 +17,4 @@
     <ProjectReference Include="..\Heimlich.Infrastructure\Heimlich.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Features\PracticeSessions\Commands\" />
-    <Folder Include="Features\PracticeSessions\Handlers\" />
-    <Folder Include="Features\PracticeSessions\Queries\" />
-  </ItemGroup>
-
 </Project>

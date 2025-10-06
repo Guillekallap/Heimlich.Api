@@ -3,6 +3,7 @@ using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Application.Features.Evaluations.Queries;
 using Heimlich.Application.Features.Groups.Commands;
 using Heimlich.Application.Features.Groups.Queries;
+using Heimlich.Application.Features.Groups.Handlers; // for extended command
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,9 +24,28 @@ namespace Heimlich.Api.Controllers
         [HttpPost("groups")]
         public async Task<IActionResult> CreateGroup([FromBody] CreateGroupDto dto)
         {
-            var command = new CreateGroupCommand(dto.Name, dto.Description, dto.PractitionerIds);
+            var command = new CreateGroupCommandWithConfig(dto.Name, dto.Description, dto.PractitionerIds, dto.EvaluationConfigId);
             var group = await _mediator.Send(command);
             return Ok(group);
+        }
+
+        // Obtener grupos creados por el instructor
+        [HttpGet("groups/owned")]
+        public async Task<IActionResult> GetOwnedGroups()
+        {
+            var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var query = new GetOwnedGroupsQuery(instructorId);
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+
+        // Configurar evaluación para el grupo
+        [HttpPost("groups/{groupId}/config/{configId}")]
+        public async Task<IActionResult> SetGroupConfig(int groupId, int configId)
+        {
+            var cmd = new SetGroupEvaluationConfigCommand(groupId, configId);
+            var result = await _mediator.Send(cmd);
+            return Ok(result);
         }
 
         // Editar grupo
@@ -37,7 +57,7 @@ namespace Heimlich.Api.Controllers
             return Ok(result);
         }
 
-        // Eliminar grupo
+        // Inactivar grupo (soft delete)
         [HttpDelete("groups/{id}")]
         public async Task<IActionResult> DeleteGroup(int id)
         {
@@ -46,7 +66,7 @@ namespace Heimlich.Api.Controllers
             return NoContent();
         }
 
-        // Visualizar grupo asignado
+        // Visualizar grupos asignados
         [HttpGet("groups/assigned")]
         public async Task<IActionResult> GetAssignedGroup([FromQuery] string userId)
         {
@@ -55,18 +75,15 @@ namespace Heimlich.Api.Controllers
             return Ok(result);
         }
 
-        // Listar evaluaciones (todas las de grupos del instructor) - placeholder hasta implementar query específica
         [HttpGet("evaluations")]
         public async Task<IActionResult> GetEvaluations()
         {
-            // Se asume query futura GetEvaluationsForInstructorQuery
             var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var query = new GetEvaluationsForInstructorQuery(instructorId);
             var result = await _mediator.Send(query);
             return Ok(result);
         }
 
-        // Crear evaluación normal o cancelada (cancel=true)
         [HttpPost("evaluations/create")]
         public async Task<IActionResult> CreateEvaluation([FromBody] CreateEvaluationDto dto)
         {
@@ -92,7 +109,23 @@ namespace Heimlich.Api.Controllers
         {
             var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(instructorId)) return Unauthorized();
-            var command = new ValidateEvaluationExtendedCommand(evaluationId, instructorId, dto.Score, dto.IsValid, dto.Comments, dto.Signature);
+            var command = new ValidateEvaluationExtendedCommand(evaluationId, instructorId, dto.Score, dto.IsValid, dto.Comments, dto.Signature, dto.EvaluationConfigId);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        [HttpPost("evaluations/{evaluationId}/assign-practitioner/{userId}")]
+        public async Task<IActionResult> AssignPractitioner(int evaluationId, string userId)
+        {
+            var command = new Heimlich.Application.Features.Evaluations.Commands.AssignPractitionerEvaluationCommand(evaluationId, userId);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        [HttpPost("evaluations/{evaluationId}/unassign-practitioner")]
+        public async Task<IActionResult> UnassignPractitioner(int evaluationId)
+        {
+            var command = new Heimlich.Application.Features.Evaluations.Commands.UnassignPractitionerEvaluationCommand(evaluationId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }

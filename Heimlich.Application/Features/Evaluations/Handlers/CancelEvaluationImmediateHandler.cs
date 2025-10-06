@@ -43,6 +43,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 EvaluatorId = request.EvaluatorId,
                 EvaluatedUserId = dto.EvaluatedUserId,
                 TrunkId = dto.TrunkId,
+                GroupId = dto.GroupId,
                 Comments = dto.Comments,
                 State = SessionStateEnum.Cancelled
             };

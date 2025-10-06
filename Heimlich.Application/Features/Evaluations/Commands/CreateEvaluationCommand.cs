@@ -7,6 +7,7 @@ namespace Heimlich.Application.Features.Evaluations.Commands
     {
         public CreateEvaluationDto Dto { get; }
         public string EvaluatorId { get; }
+
         public CreateEvaluationCommand(CreateEvaluationDto dto, string evaluatorId)
         {
             Dto = dto;

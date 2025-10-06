@@ -14,10 +14,10 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
         public async Task<bool> Handle(DeleteEvaluationConfigCommand request, CancellationToken cancellationToken)
         {
-            var config = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.GroupId == request.GroupId, cancellationToken);
-            if (config == null) return false;
-            if (config.IsDefault) throw new InvalidOperationException("No se puede eliminar la configuración default.");
-            _context.EvaluationConfigs.Remove(config);
+            var link = await _context.EvaluationConfigGroups
+                .FirstOrDefaultAsync(l => l.GroupId == request.GroupId, cancellationToken);
+            if (link == null) return false;
+            _context.EvaluationConfigGroups.Remove(link);
             await _context.SaveChangesAsync(cancellationToken);
             return true;
         }

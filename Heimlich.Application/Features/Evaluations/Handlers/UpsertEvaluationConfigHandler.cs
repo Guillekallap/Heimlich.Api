@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Domain.Entities;
 using Heimlich.Infrastructure.Identity;
@@ -11,30 +9,49 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
     public class UpsertEvaluationConfigHandler : IRequestHandler<UpsertEvaluationConfigCommand, EvaluationConfig>
     {
         private readonly HeimlichDbContext _context;
-        public UpsertEvaluationConfigHandler(HeimlichDbContext context) { _context = context; }
+
+        public UpsertEvaluationConfigHandler(HeimlichDbContext context)
+        { _context = context; }
 
         public async Task<EvaluationConfig> Handle(UpsertEvaluationConfigCommand request, CancellationToken cancellationToken)
         {
-            var config = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.GroupId == request.GroupId, cancellationToken);
-            if (config == null)
+            // Reutilizar por nombre (único). Si existe se actualiza solo si coincide con default update semantics? Mejor no mutar existente para mantener trazabilidad.
+            var existing = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.Name == request.Name, cancellationToken);
+            if (existing != null)
             {
-                config = new EvaluationConfig
+                // Solo crear vínculo al grupo
+                var currentLink = await _context.EvaluationConfigGroups.FirstOrDefaultAsync(l => l.GroupId == request.GroupId, cancellationToken);
+                if (currentLink != null && currentLink.EvaluationConfigId != existing.Id)
                 {
-                    GroupId = request.GroupId,
-                    MaxErrors = request.MaxErrors,
-                    MaxTime = request.MaxTime,
-                    Name = request.Name,
-                    IsDefault = request.IsDefault
-                };
-                _context.EvaluationConfigs.Add(config);
+                    _context.EvaluationConfigGroups.Remove(currentLink);
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                if (currentLink == null || currentLink.EvaluationConfigId != existing.Id)
+                {
+                    _context.EvaluationConfigGroups.Add(new EvaluationConfigGroup { GroupId = request.GroupId, EvaluationConfigId = existing.Id });
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                return existing;
             }
-            else
+
+            var config = new EvaluationConfig
             {
-                config.MaxErrors = request.MaxErrors;
-                config.MaxTime = request.MaxTime;
-                config.Name = request.Name;
-                config.IsDefault = request.IsDefault;
+                Name = request.Name,
+                MaxErrors = request.MaxErrors,
+                MaxTime = request.MaxTime,
+                IsDefault = request.IsDefault,
+                GroupId = null
+            };
+            _context.EvaluationConfigs.Add(config);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var linkOld = await _context.EvaluationConfigGroups.FirstOrDefaultAsync(l => l.GroupId == request.GroupId, cancellationToken);
+            if (linkOld != null)
+            {
+                _context.EvaluationConfigGroups.Remove(linkOld);
+                await _context.SaveChangesAsync(cancellationToken);
             }
+            _context.EvaluationConfigGroups.Add(new EvaluationConfigGroup { GroupId = request.GroupId, EvaluationConfigId = config.Id });
             await _context.SaveChangesAsync(cancellationToken);
             return config;
         }

@@ -1,8 +1,10 @@
-﻿namespace Heimlich.Application.Features.Groups.Commands
+﻿using MediatR;
+
+namespace Heimlich.Application.Features.Groups.Commands
 {
-    public class DeleteGroupCommand
+    public class DeleteGroupCommand : IRequest<Unit>
     {
-        public int GroupId { get; set; }
+        public int GroupId { get; }
 
         public DeleteGroupCommand(int groupId)
         {

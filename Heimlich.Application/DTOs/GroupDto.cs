@@ -7,6 +7,8 @@
         public string Description { get; set; }
         public DateTime CreationDate { get; set; }
         public string Status { get; set; }
+        public string OwnerInstructorId { get; set; }
+        public string OwnerInstructorName { get; set; }
         public IList<string> PractitionerIds { get; set; }
     }
 }

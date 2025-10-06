@@ -18,7 +18,7 @@ namespace Heimlich.Application.Mapping
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => GroupStatusEnum.Active));
             CreateMap<EditGroupDto, Group>();
 
-            // Evaluation
+            // Evaluation mapping (incluir campos agregados)
             CreateMap<Evaluation, EvaluationDto>();
 
             // Simulation mapping centralizado

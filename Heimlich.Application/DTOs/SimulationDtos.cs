@@ -6,6 +6,7 @@ namespace Heimlich.Application.DTOs
     {
         public int TrunkId { get; set; }
         public List<SimulationSampleDto> Samples { get; set; } = new();
+
         // Hacer opcional para que en cancel no sea requerido
         public SimulationResultDto? Result { get; set; }
     }

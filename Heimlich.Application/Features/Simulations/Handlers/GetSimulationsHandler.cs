@@ -1,7 +1,3 @@
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Simulations.Queries;
 using Heimlich.Domain.Enums;
@@ -14,7 +10,9 @@ namespace Heimlich.Application.Features.Simulations.Handlers
     public class GetSimulationsHandler : IRequestHandler<GetSimulationsQuery, IEnumerable<SimulationSessionDto>>
     {
         private readonly HeimlichDbContext _context;
-        public GetSimulationsHandler(HeimlichDbContext context) { _context = context; }
+
+        public GetSimulationsHandler(HeimlichDbContext context)
+        { _context = context; }
 
         public async Task<IEnumerable<SimulationSessionDto>> Handle(GetSimulationsQuery request, CancellationToken cancellationToken)
         {

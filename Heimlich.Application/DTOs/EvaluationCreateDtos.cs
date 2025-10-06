@@ -4,9 +4,10 @@ namespace Heimlich.Application.DTOs
 {
     public class CreateEvaluationDto
     {
-        public string EvaluatedUserId { get; set; }
+        public string? EvaluatedUserId { get; set; }
         public int? TrunkId { get; set; }
-        public string Comments { get; set; }
+        public int? GroupId { get; set; }
+        public string? Comments { get; set; }
         public List<EvaluationMeasurementInputDto> Measurements { get; set; } = new();
     }
 
@@ -22,7 +23,8 @@ namespace Heimlich.Application.DTOs
     {
         public double Score { get; set; }
         public bool IsValid { get; set; }
-        public string Comments { get; set; }
+        public string? Comments { get; set; }
         public string Signature { get; set; }
+        public int EvaluationConfigId { get; set; }
     }
 }

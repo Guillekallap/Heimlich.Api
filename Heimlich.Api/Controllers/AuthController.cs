@@ -1,9 +1,11 @@
 ﻿using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Auth.Commands;
 using Heimlich.Application.Features.Auth.Queries;
+using Heimlich.Application.Features.Users.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Heimlich.Api.Controllers
 {
@@ -52,6 +54,28 @@ namespace Heimlich.Api.Controllers
             if (result)
                 return Ok(new { message = "Sesión cerrada correctamente" });
             return BadRequest(new { message = "Error al cerrar sesión" });
+        }
+
+        [HttpGet("profile"), Authorize]
+        public async Task<IActionResult> Profile([FromQuery] string? userId)
+        {
+            var id = userId ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(id)) return Unauthorized();
+            var query = new GetUserProfileQuery(id);
+            var result = await _mediator.Send(query);
+            if (result == null) return NotFound();
+            return Ok(result);
+        }
+
+        [HttpPost("change-password"), Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            var command = new ChangePasswordCommand(userId, dto.CurrentPassword, dto.NewPassword);
+            var ok = await _mediator.Send(command);
+            if (!ok) return BadRequest(new { message = "No se pudo cambiar la contraseña" });
+            return Ok(new { message = "Contraseña actualizada" });
         }
     }
 }

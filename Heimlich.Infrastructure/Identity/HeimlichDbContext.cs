@@ -8,11 +8,12 @@ namespace Heimlich.Infrastructure.Identity
     {
         public DbSet<Group> Groups { get; set; }
         public DbSet<UserGroup> UserGroups { get; set; }
-        public DbSet<Trunk> Trunks { get; set; } // Renombrado desde Torsos
+        public DbSet<Trunk> Trunks { get; set; }
         public DbSet<Evaluation> Evaluations { get; set; }
         public DbSet<Measurement> Measurements { get; set; }
         public DbSet<Simulation> Simulations { get; set; }
         public DbSet<EvaluationConfig> EvaluationConfigs { get; set; }
+        public DbSet<EvaluationConfigGroup> EvaluationConfigGroups { get; set; }
 
         public HeimlichDbContext(DbContextOptions<HeimlichDbContext> options)
         : base(options) { }
@@ -30,11 +31,13 @@ namespace Heimlich.Infrastructure.Identity
             builder.Entity<UserGroup>()
                 .HasOne(ug => ug.User)
                 .WithMany(u => u.UserGroups)
-                .HasForeignKey(ug => ug.UserId);
+                .HasForeignKey(ug => ug.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
             builder.Entity<UserGroup>()
                 .HasOne(ug => ug.Group)
                 .WithMany(g => g.UserGroups)
-                .HasForeignKey(ug => ug.GroupId);
+                .HasForeignKey(ug => ug.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Evaluation>()
                 .Property(e => e.Comments).IsRequired(false);
@@ -55,10 +58,23 @@ namespace Heimlich.Infrastructure.Identity
                 .HasForeignKey(ev => ev.EvaluatorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<Evaluation>()
+                .HasOne(ev => ev.Group)
+                .WithMany()
+                .HasForeignKey(ev => ev.GroupId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Evaluation>()
+                .HasOne(ev => ev.EvaluationConfig)
+                .WithMany()
+                .HasForeignKey(ev => ev.EvaluationConfigId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             builder.Entity<Simulation>()
                 .HasOne(s => s.Practitioner)
                 .WithMany(u => u.Simulations)
-                .HasForeignKey(s => s.PractitionerId);
+                .HasForeignKey(s => s.PractitionerId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Measurement>()
                 .HasOne(m => m.Simulation)
@@ -74,11 +90,28 @@ namespace Heimlich.Infrastructure.Identity
             builder.Entity<Measurement>()
                 .HasCheckConstraint("CK_Measurement_Owner", "(CASE WHEN [SimulationId] IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN [EvaluationId] IS NOT NULL THEN 1 ELSE 0 END) = 1");
 
+            // EvaluationConfig adjustments
+            builder.Entity<EvaluationConfig>()
+                .HasIndex(c => c.Name)
+                .IsUnique();
             builder.Entity<EvaluationConfig>()
                 .HasOne(ec => ec.Group)
                 .WithMany()
                 .HasForeignKey(ec => ec.GroupId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<EvaluationConfigGroup>()
+                .HasKey(ecg => new { ecg.EvaluationConfigId, ecg.GroupId });
+            builder.Entity<EvaluationConfigGroup>()
+                .HasOne(ecg => ecg.EvaluationConfig)
+                .WithMany(c => c.EvaluationConfigGroups)
+                .HasForeignKey(ecg => ecg.EvaluationConfigId)
+                .OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<EvaluationConfigGroup>()
+                .HasOne(ecg => ecg.Group)
+                .WithMany(g => g.EvaluationConfigGroups)
+                .HasForeignKey(ecg => ecg.GroupId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

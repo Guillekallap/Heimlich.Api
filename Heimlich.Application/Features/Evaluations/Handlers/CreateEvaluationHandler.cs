@@ -38,8 +38,9 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             var evaluation = new Evaluation
             {
                 EvaluatorId = request.EvaluatorId,
-                EvaluatedUserId = dto.EvaluatedUserId,
+                EvaluatedUserId = dto.EvaluatedUserId, // puede iniciar null
                 TrunkId = dto.TrunkId,
+                GroupId = dto.GroupId,
                 Comments = dto.Comments,
                 State = SessionStateEnum.Active
             };
