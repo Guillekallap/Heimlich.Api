@@ -15,7 +15,7 @@ namespace Heimlich.Domain.Entities
         public int? TotalErrors { get; set; }
         public double? AverageErrorsPerMeasurement { get; set; }
         public bool? IsValid { get; set; }
-        public string Comments { get; set; }
+        public string? Comments { get; set; }
         public SessionStateEnum State { get; set; } = SessionStateEnum.Active;
         public ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
     }

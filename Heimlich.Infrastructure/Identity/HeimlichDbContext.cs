@@ -8,7 +8,7 @@ namespace Heimlich.Infrastructure.Identity
     {
         public DbSet<Group> Groups { get; set; }
         public DbSet<UserGroup> UserGroups { get; set; }
-        public DbSet<Trunk> Torsos { get; set; }
+        public DbSet<Trunk> Trunks { get; set; } // Renombrado desde Torsos
         public DbSet<Evaluation> Evaluations { get; set; }
         public DbSet<Measurement> Measurements { get; set; }
         public DbSet<Simulation> Simulations { get; set; }
@@ -35,6 +35,13 @@ namespace Heimlich.Infrastructure.Identity
                 .HasOne(ug => ug.Group)
                 .WithMany(g => g.UserGroups)
                 .HasForeignKey(ug => ug.GroupId);
+
+            builder.Entity<Evaluation>()
+                .Property(e => e.Comments).IsRequired(false);
+            builder.Entity<Evaluation>()
+                .Property(e => e.Signature).IsRequired(false);
+            builder.Entity<Simulation>()
+                .Property(s => s.Comments).IsRequired(false);
 
             builder.Entity<Evaluation>()
                 .HasOne(ev => ev.EvaluatedUser)

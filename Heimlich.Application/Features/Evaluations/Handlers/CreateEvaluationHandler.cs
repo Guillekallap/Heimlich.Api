@@ -1,3 +1,4 @@
+using AutoMapper;
 using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Domain.Entities;
@@ -10,22 +11,13 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
     public class CreateEvaluationHandler : IRequestHandler<CreateEvaluationCommand, EvaluationDto>
     {
         private readonly HeimlichDbContext _context;
+        private readonly IMapper _mapper;
 
-        public CreateEvaluationHandler(HeimlichDbContext context)
-        { _context = context; }
+        public CreateEvaluationHandler(HeimlichDbContext context, IMapper mapper)
+        { _context = context; _mapper = mapper; }
 
-        public async Task<EvaluationDto> Handle(CreateEvaluationCommand request, CancellationToken cancellationToken)
+        private void FillMeasurements(Evaluation evaluation, CreateEvaluationDto dto)
         {
-            var dto = request.Dto;
-            var evaluation = new Evaluation
-            {
-                EvaluatorId = request.EvaluatorId,
-                EvaluatedUserId = dto.EvaluatedUserId,
-                TrunkId = dto.TrunkId,
-                Comments = dto.Comments,
-                State = SessionStateEnum.Active
-            };
-
             foreach (var m in dto.Measurements)
             {
                 evaluation.Measurements.Add(new Measurement
@@ -38,20 +30,23 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                     Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs ?? 0)
                 });
             }
+        }
 
+        public async Task<EvaluationDto> Handle(CreateEvaluationCommand request, CancellationToken cancellationToken)
+        {
+            var dto = request.Dto;
+            var evaluation = new Evaluation
+            {
+                EvaluatorId = request.EvaluatorId,
+                EvaluatedUserId = dto.EvaluatedUserId,
+                TrunkId = dto.TrunkId,
+                Comments = dto.Comments,
+                State = SessionStateEnum.Active
+            };
+            FillMeasurements(evaluation, dto);
             _context.Evaluations.Add(evaluation);
             await _context.SaveChangesAsync(cancellationToken);
-
-            return new EvaluationDto
-            {
-                Id = evaluation.Id,
-                EvaluatorId = evaluation.EvaluatorId,
-                EvaluatedUserId = evaluation.EvaluatedUserId,
-                Score = evaluation.Score,
-                Comments = evaluation.Comments,
-                IsValid = evaluation.IsValid,
-                State = evaluation.State
-            };
+            return _mapper.Map<EvaluationDto>(evaluation);
         }
     }
 }

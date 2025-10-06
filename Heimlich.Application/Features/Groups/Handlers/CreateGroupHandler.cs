@@ -1,6 +1,7 @@
 ﻿using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Groups.Commands;
 using Heimlich.Domain.Entities;
+using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 Name = request.Name,
                 Description = request.Description ?? string.Empty,
                 CreationDate = DateTime.UtcNow,
-                Status = "Active"
+                Status = GroupStatusEnum.Active
             };
             _context.Groups.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
@@ -47,6 +48,8 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 Id = entity.Id,
                 Name = entity.Name,
                 Description = entity.Description,
+                CreationDate = entity.CreationDate,
+                Status = entity.Status.ToString(),
                 PractitionerIds = practitioners
             };
         }

@@ -16,6 +16,7 @@ namespace Heimlich.Api.Controllers
     public class InstructorController : ControllerBase
     {
         private readonly IMediator _mediator;
+
         public InstructorController(IMediator mediator) => _mediator = mediator;
 
         // Crear grupo

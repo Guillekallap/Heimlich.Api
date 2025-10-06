@@ -1,3 +1,4 @@
+using AutoMapper;
 using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Simulations.Commands;
 using Heimlich.Domain.Entities;
@@ -10,36 +11,14 @@ namespace Heimlich.Application.Features.Simulations.Handlers
     public class CreateSimulationHandler : IRequestHandler<CreateSimulationCommand, SimulationSessionDto>
     {
         private readonly HeimlichDbContext _context;
+        private readonly IMapper _mapper;
 
-        public CreateSimulationHandler(HeimlichDbContext context)
-        { _context = context; }
+        public CreateSimulationHandler(HeimlichDbContext context, IMapper mapper)
+        { _context = context; _mapper = mapper; }
 
-        public async Task<SimulationSessionDto> Handle(CreateSimulationCommand request, CancellationToken cancellationToken)
+        private void FillMeasurements(Simulation simulation, CreateSimulationDto dto)
         {
-            var dto = request.Dto;
-            if (dto == null) throw new System.ArgumentNullException(nameof(request.Dto));
-            if (dto.TrunkId <= 0) throw new System.ArgumentException("TrunkId inválido");
-            if (string.IsNullOrEmpty(request.PractitionerId)) throw new System.ArgumentException("PractitionerId requerido");
-            if (dto.Samples == null || dto.Samples.Count == 0) throw new System.ArgumentException("Samples requeridos");
-
-            foreach (var sample in dto.Samples)
-            {
-                foreach (var metric in sample.Metrics)
-                {
-                    if (!System.Enum.IsDefined(typeof(MetricTypeEnum), metric.MetricType))
-                        throw new System.ArgumentException($"MetricType inválido: {metric.MetricType}");
-                }
-            }
-
             var orderedSamples = dto.Samples.OrderBy(s => s.ElapsedMs).ToList();
-
-            var simulation = new Simulation
-            {
-                PractitionerId = request.PractitionerId,
-                TrunkId = dto.TrunkId,
-                State = SessionStateEnum.Active
-            };
-
             foreach (var sample in orderedSamples)
             {
                 foreach (var metric in sample.Metrics)
@@ -55,42 +34,34 @@ namespace Heimlich.Application.Features.Simulations.Handlers
                     });
                 }
             }
-
             var totalErrors = simulation.Measurements.Count(m => !m.IsValid);
             var duration = orderedSamples.Max(s => (long?)s.ElapsedMs) ?? 0;
             simulation.TotalErrors = dto.Result?.TotalErrors ?? totalErrors;
             simulation.TotalDurationMs = dto.Result?.TotalDurationMs ?? duration;
             simulation.AverageErrorsPerMeasurement = dto.Result?.AverageErrorsPerSample ?? (simulation.Measurements.Count == 0 ? 0 : (double)totalErrors / orderedSamples.Count);
             simulation.IsValid = dto.Result?.IsValid ?? (totalErrors == 0);
-            simulation.Comments = dto.Result?.Comments; // puede quedar null
+            simulation.Comments = dto.Result?.Comments;
             simulation.EndDate = simulation.TotalDurationMs.HasValue ? simulation.CreationDate.AddMilliseconds(simulation.TotalDurationMs.Value) : null;
+        }
 
+        public async Task<SimulationSessionDto> Handle(CreateSimulationCommand request, CancellationToken cancellationToken)
+        {
+            var dto = request.Dto;
+            if (dto == null) throw new System.ArgumentNullException(nameof(request.Dto));
+            if (dto.TrunkId <= 0) throw new System.ArgumentException("TrunkId inválido");
+            if (string.IsNullOrEmpty(request.PractitionerId)) throw new System.ArgumentException("PractitionerId requerido");
+            if (dto.Samples == null || dto.Samples.Count == 0) throw new System.ArgumentException("Samples requeridos");
+
+            var simulation = new Simulation
+            {
+                PractitionerId = request.PractitionerId,
+                TrunkId = dto.TrunkId,
+                State = SessionStateEnum.Active
+            };
+            FillMeasurements(simulation, dto);
             _context.Simulations.Add(simulation);
             await _context.SaveChangesAsync(cancellationToken);
-
-            return new SimulationSessionDto
-            {
-                Id = simulation.Id,
-                PractitionerId = simulation.PractitionerId,
-                TrunkId = simulation.TrunkId,
-                TotalDurationMs = simulation.TotalDurationMs,
-                TotalErrors = simulation.TotalErrors,
-                AverageErrorsPerSample = simulation.AverageErrorsPerMeasurement,
-                IsValid = simulation.IsValid,
-                Comments = simulation.Comments,
-                Samples = simulation.Measurements
-                    .GroupBy(m => m.ElapsedMs ?? 0)
-                    .Select(g => new SimulationSampleDto
-                    {
-                        ElapsedMs = g.Key,
-                        Metrics = g.Select(m => new SimulationMetricDto
-                        {
-                            MetricType = m.MetricType,
-                            Value = m.Value,
-                            IsValid = m.IsValid
-                        }).ToList()
-                    }).ToList()
-            };
+            return _mapper.Map<SimulationSessionDto>(simulation);
         }
     }
 }
