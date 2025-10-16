@@ -20,7 +20,6 @@ namespace Heimlich.Application.Features.Groups.Handlers
 
         private async Task<int> EnsureConfigLinkAsync(int groupId, int? evaluationConfigId, CancellationToken cancellationToken)
         {
-            // Si viene un id de config, validar y vincular
             if (evaluationConfigId.HasValue)
             {
                 var config = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.Id == evaluationConfigId.Value, cancellationToken);
@@ -29,7 +28,6 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 await _context.SaveChangesAsync(cancellationToken);
                 return config.Id;
             }
-            // Vincular default global
             var defaultConfig = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.IsDefault, cancellationToken);
             if (defaultConfig == null)
             {
@@ -45,6 +43,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
         public async Task<GroupDto> Handle(CreateGroupCommand request, CancellationToken cancellationToken)
         {
             var ownerId = _http.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var ownerName = ownerId != null ? await _context.Users.Where(u => u.Id == ownerId).Select(u => u.Fullname).FirstOrDefaultAsync(cancellationToken) : null;
             var entity = new Group
             {
                 Name = request.Name.Trim(),
@@ -70,15 +69,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 await _context.SaveChangesAsync(cancellationToken);
             }
 
-            // Vincular configuración (default o específica) - se obtiene desde DTO extendido: necesitamos EvaluationConfigId => agregarlo al command si no existe.
-            if (request is CreateGroupCommandWithConfig extended)
-            {
-                await EnsureConfigLinkAsync(entity.Id, extended.EvaluationConfigId, cancellationToken);
-            }
-            else
-            {
-                await EnsureConfigLinkAsync(entity.Id, null, cancellationToken);
-            }
+            await EnsureConfigLinkAsync(entity.Id, request.EvaluationConfigId, cancellationToken);
 
             var practitioners = await _context.UserGroups
                 .Where(ug => ug.GroupId == entity.Id)
@@ -92,19 +83,10 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 Description = entity.Description,
                 CreationDate = entity.CreationDate,
                 Status = entity.Status.ToString(),
+                OwnerInstructorId = ownerId,
+                OwnerInstructorName = ownerName,
                 PractitionerIds = practitioners
             };
-        }
-    }
-
-    // Command extendido para soportar EvaluationConfigId sin romper llamadas existentes (si existían)
-    public class CreateGroupCommandWithConfig : CreateGroupCommand
-    {
-        public int? EvaluationConfigId { get; }
-        public CreateGroupCommandWithConfig(string name, string? description, List<string>? practitionerIds, int? evaluationConfigId)
-            : base(name, description, practitionerIds)
-        {
-            EvaluationConfigId = evaluationConfigId;
         }
     }
 }

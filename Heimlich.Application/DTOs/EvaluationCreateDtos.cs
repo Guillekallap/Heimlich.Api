@@ -8,6 +8,7 @@ namespace Heimlich.Application.DTOs
         public int? TrunkId { get; set; }
         public int? GroupId { get; set; }
         public string? Comments { get; set; }
+        public double? Score { get; set; } // Permitir score desde mobile
         public List<EvaluationMeasurementInputDto> Measurements { get; set; } = new();
     }
 

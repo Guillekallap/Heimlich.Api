@@ -20,6 +20,10 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             if (evaluation == null) throw new KeyNotFoundException("Evaluación no encontrada");
             if (evaluation.EvaluatedUserId == null)
                 throw new InvalidOperationException("No se puede validar una evaluación sin practicante asignado.");
+            if (evaluation.State == SessionStateEnum.Validated)
+                throw new InvalidOperationException("La evaluación ya fue validada.");
+            if (evaluation.State == SessionStateEnum.Cancelled)
+                throw new InvalidOperationException("No se puede validar una evaluación cancelada.");
             var config = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.Id == request.EvaluationConfigId, cancellationToken);
             if (config == null)
                 throw new KeyNotFoundException("Configuración de evaluación no encontrada.");

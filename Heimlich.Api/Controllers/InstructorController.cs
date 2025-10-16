@@ -3,10 +3,12 @@ using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Application.Features.Evaluations.Queries;
 using Heimlich.Application.Features.Groups.Commands;
 using Heimlich.Application.Features.Groups.Queries;
-using Heimlich.Application.Features.Groups.Handlers; // for extended command
+using Heimlich.Domain.Entities;
+using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace Heimlich.Api.Controllers
@@ -17,14 +19,19 @@ namespace Heimlich.Api.Controllers
     public class InstructorController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly HeimlichDbContext _context;
 
-        public InstructorController(IMediator mediator) => _mediator = mediator;
+        public InstructorController(IMediator mediator, HeimlichDbContext context)
+        {
+            _mediator = mediator;
+            _context = context;
+        }
 
         // Crear grupo
         [HttpPost("groups")]
         public async Task<IActionResult> CreateGroup([FromBody] CreateGroupDto dto)
         {
-            var command = new CreateGroupCommandWithConfig(dto.Name, dto.Description, dto.PractitionerIds, dto.EvaluationConfigId);
+            var command = new CreateGroupCommand(dto.Name, dto.Description, dto.PractitionerIds, dto.EvaluationConfigId);
             var group = await _mediator.Send(command);
             return Ok(group);
         }
@@ -117,7 +124,7 @@ namespace Heimlich.Api.Controllers
         [HttpPost("evaluations/{evaluationId}/assign-practitioner/{userId}")]
         public async Task<IActionResult> AssignPractitioner(int evaluationId, string userId)
         {
-            var command = new Heimlich.Application.Features.Evaluations.Commands.AssignPractitionerEvaluationCommand(evaluationId, userId);
+            var command = new AssignPractitionerEvaluationCommand(evaluationId, userId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -125,7 +132,7 @@ namespace Heimlich.Api.Controllers
         [HttpPost("evaluations/{evaluationId}/unassign-practitioner")]
         public async Task<IActionResult> UnassignPractitioner(int evaluationId)
         {
-            var command = new Heimlich.Application.Features.Evaluations.Commands.UnassignPractitionerEvaluationCommand(evaluationId);
+            var command = new UnassignPractitionerEvaluationCommand(evaluationId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -166,6 +173,65 @@ namespace Heimlich.Api.Controllers
             var result = await _mediator.Send(command);
             if (!result) return NotFound();
             return NoContent();
+        }
+
+        // CRUD EvaluationConfig
+        [HttpPost("evaluation-configs")]
+        public async Task<IActionResult> CreateEvaluationConfig([FromBody] EvaluationParametersDto dto)
+        {
+            var config = new EvaluationConfig
+            {
+                Name = dto.Name,
+                MaxErrors = dto.MaxErrors,
+                MaxTime = dto.MaxTime,
+                IsDefault = false
+            };
+            _context.EvaluationConfigs.Add(config);
+            await _context.SaveChangesAsync();
+            return Ok(config);
+        }
+
+        [HttpGet("evaluation-configs")]
+        public async Task<IActionResult> GetEvaluationConfigs()
+        {
+            var configs = await _context.EvaluationConfigs.ToListAsync();
+            return Ok(configs);
+        }
+
+        [HttpPut("evaluation-configs/{id}")]
+        public async Task<IActionResult> UpdateEvaluationConfig(int id, [FromBody] EvaluationParametersDto dto)
+        {
+            var config = await _context.EvaluationConfigs.FindAsync(id);
+            if (config == null) return NotFound();
+            if (config.IsDefault) return BadRequest("No se puede modificar la configuración default");
+            config.Name = dto.Name;
+            config.MaxErrors = dto.MaxErrors;
+            config.MaxTime = dto.MaxTime;
+            await _context.SaveChangesAsync();
+            return Ok(config);
+        }
+
+        [HttpDelete("evaluation-configs/{id}")]
+        public async Task<IActionResult> DeleteEvaluationConfig(int id)
+        {
+            var config = await _context.EvaluationConfigs.Include(c => c.EvaluationConfigGroups).FirstOrDefaultAsync(c => c.Id == id);
+            if (config == null) return NotFound();
+            if (config.IsDefault) return BadRequest("No se puede eliminar la configuración default");
+            if (config.EvaluationConfigGroups.Any()) return BadRequest("No se puede eliminar una configuración vinculada a grupos");
+            _context.EvaluationConfigs.Remove(config);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // Listar practicantes simples
+        [HttpGet("practitioners")]
+        public async Task<IActionResult> GetPractitioners()
+        {
+            var practitioners = await _context.Users
+                .Where(u => u.UserGroups.Any() && u.UserGroups.All(ug => ug.Group.Status == Heimlich.Domain.Enums.GroupStatusEnum.Active))
+                .Select(u => new { u.Id, u.Fullname })
+                .ToListAsync();
+            return Ok(practitioners);
         }
     }
 }

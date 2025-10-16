@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Domain.Entities;
 using Heimlich.Infrastructure.Identity;
@@ -9,17 +11,15 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
     public class UpsertEvaluationConfigHandler : IRequestHandler<UpsertEvaluationConfigCommand, EvaluationConfig>
     {
         private readonly HeimlichDbContext _context;
-
-        public UpsertEvaluationConfigHandler(HeimlichDbContext context)
-        { _context = context; }
+        public UpsertEvaluationConfigHandler(HeimlichDbContext context) { _context = context; }
 
         public async Task<EvaluationConfig> Handle(UpsertEvaluationConfigCommand request, CancellationToken cancellationToken)
         {
-            // Reutilizar por nombre (único). Si existe se actualiza solo si coincide con default update semantics? Mejor no mutar existente para mantener trazabilidad.
+            // Buscar config por nombre (único)
             var existing = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.Name == request.Name, cancellationToken);
             if (existing != null)
             {
-                // Solo crear vínculo al grupo
+                // Solo vincular al grupo
                 var currentLink = await _context.EvaluationConfigGroups.FirstOrDefaultAsync(l => l.GroupId == request.GroupId, cancellationToken);
                 if (currentLink != null && currentLink.EvaluationConfigId != existing.Id)
                 {

@@ -41,7 +41,15 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 _context.EvaluationConfigGroups.Add(new EvaluationConfigGroup { GroupId = request.GroupId, EvaluationConfigId = defaultConfig.Id });
                 await _context.SaveChangesAsync(cancellationToken);
             }
-            return defaultConfig;
+            // Retornar DTO plano para evitar ciclos
+            return new EvaluationConfig
+            {
+                Id = defaultConfig.Id,
+                Name = defaultConfig.Name,
+                MaxErrors = defaultConfig.MaxErrors,
+                MaxTime = defaultConfig.MaxTime,
+                IsDefault = defaultConfig.IsDefault
+            };
         }
     }
 }
