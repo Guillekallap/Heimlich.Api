@@ -97,6 +97,19 @@ builder.Services.AddSingleton(provider =>
     return configMapper.CreateMapper();
 });
 
+// CORS seguro para producción
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowMobile", policy =>
+        policy.WithOrigins(
+            "https://TU-APP-MOBILE.azurestaticapps.net", // Cambia por tu dominio real
+            "https://localhost:4200" // Permite localhost solo para pruebas locales
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+    );
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -105,18 +118,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Seed roles + trunks (y futuros datos) de forma idempotente
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = services.GetRequiredService<UserManager<User>>();
-    var context = services.GetRequiredService<HeimlichDbContext>();
-    SeedData.InitializeAsync(userManager, roleManager, context).GetAwaiter().GetResult();
-}
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("AllowMobile");
 app.MapControllers();
 app.Run();
