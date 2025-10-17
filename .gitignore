@@ -482,3 +482,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# App settings sensibles (no subir secretos ni cadenas reales)
+Heimlich.Api/appsettings.Production.json
+Heimlich.Api/appsettings.Development.json
+Heimlich.Api/appsettings.Local.json
