@@ -22,10 +22,6 @@ namespace Heimlich.Infrastructure.Identity
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<Measurement>()
-               .Property(m => m.MetricType)
-               .HasConversion<int>();
-
             builder.Entity<UserGroup>()
                 .HasKey(ug => new { ug.UserId, ug.GroupId });
             builder.Entity<UserGroup>()

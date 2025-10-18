@@ -23,18 +23,24 @@ namespace Heimlich.Application.Mapping
 
             // Simulation mapping centralizado
             CreateMap<Simulation, SimulationSessionDto>()
-                .ForMember(dest => dest.AverageErrorsPerSample, opt => opt.MapFrom(src => src.AverageErrorsPerMeasurement))
+                .ForMember(dest => dest.AverageErrorsPerMeasurement, opt => opt.MapFrom(src => src.AverageErrorsPerMeasurement))
                 .ForMember(dest => dest.Samples, opt => opt.MapFrom(src => src.Measurements
-                    .GroupBy(m => m.ElapsedMs ?? 0)
-                    .Select(g => new SimulationSampleDto
+                    .OrderBy(m => m.ElapsedMs)
+                    .Select(m => new SimulationSampleDto
                     {
-                        ElapsedMs = g.Key,
-                        Metrics = g.Select(m => new SimulationMetricDto
+                        ElapsedMs = m.ElapsedMs ?? 0,
+                        Measurement = new SimulationMeasurementDto
                         {
-                            MetricType = m.MetricType,
-                            Value = m.Value,
+                            ForceValue = m.ForceValue,
+                            ForceIsValid = m.ForceIsValid,
+                            TouchValue = m.TouchValue,
+                            TouchIsValid = m.TouchIsValid,
+                            HandPositionValue = m.HandPositionValue,
+                            HandPositionIsValid = m.HandPositionIsValid,
+                            PositionValue = m.PositionValue,
+                            PositionIsValid = m.PositionIsValid,
                             IsValid = m.IsValid
-                        }).ToList()
+                        }
                     }).ToList()));
         }
     }

@@ -16,7 +16,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
         public async Task<IEnumerable<GroupRankingDto>> Handle(GetRankingForInstructorQuery request, CancellationToken cancellationToken)
         {
             var evaluations = await _context.Evaluations
-                .Where(e => e.EvaluatorId == request.InstructorId && e.Score.HasValue && e.GroupId.HasValue)
+                .Where(e => e.EvaluatorId == request.InstructorId && e.Score != null && e.GroupId != null && (e.State == Domain.Enums.SessionStateEnum.Active || e.State == Domain.Enums.SessionStateEnum.Validated))
                 .ToListAsync(cancellationToken);
 
             var groupIds = evaluations.Select(e => e.GroupId.Value).Distinct().ToList();
@@ -28,11 +28,11 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 {
                     GroupId = g.Key,
                     GroupName = groupNames.ContainsKey(g.Key) ? groupNames[g.Key] : "",
-                    GroupAverage = g.Average(e => e.Score ?? 0),
+                    GroupAverage = g.Average(e => e.Score),
                     Practitioners = g.GroupBy(e => e.EvaluatedUserId).Select(pg => new PractitionerRankingDto
                     {
                         UserId = pg.Key,
-                        AverageScore = pg.Average(e => e.Score ?? 0),
+                        AverageScore = pg.Average(e => e.Score),
                         EvaluationCount = pg.Count()
                     }).ToList()
                 })

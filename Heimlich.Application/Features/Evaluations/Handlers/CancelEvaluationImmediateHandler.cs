@@ -25,10 +25,16 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                     evaluation.Measurements.Add(new Measurement
                     {
                         Evaluation = evaluation,
-                        MetricType = m.MetricType,
-                        Value = m.Value,
-                        IsValid = m.IsValid,
                         ElapsedMs = m.ElapsedMs,
+                        ForceValue = m.ForceValue,
+                        ForceIsValid = m.ForceIsValid,
+                        TouchValue = m.TouchValue,
+                        TouchIsValid = m.TouchIsValid,
+                        HandPositionValue = m.HandPositionValue,
+                        HandPositionIsValid = m.HandPositionIsValid,
+                        PositionValue = m.PositionValue,
+                        PositionIsValid = m.PositionIsValid,
+                        IsValid = m.IsValid,
                         Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs ?? 0)
                     });
                 }
@@ -48,6 +54,10 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 State = SessionStateEnum.Cancelled
             };
             FillMeasurements(evaluation, dto);
+            evaluation.TotalErrors = dto.Measurements.Count(m => !m.IsValid);
+            evaluation.TotalSuccess = dto.Measurements.Count(m => m.IsValid);
+            evaluation.TotalMeasurements = dto.Measurements.Count;
+            evaluation.SuccessRate = evaluation.TotalMeasurements > 0 ? (double)evaluation.TotalSuccess / evaluation.TotalMeasurements : 0;
             _context.Evaluations.Add(evaluation);
             await _context.SaveChangesAsync(cancellationToken);
             return _mapper.Map<EvaluationDto>(evaluation);

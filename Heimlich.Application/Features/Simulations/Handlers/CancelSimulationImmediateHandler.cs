@@ -18,40 +18,50 @@ namespace Heimlich.Application.Features.Simulations.Handlers
 
         private void FillMeasurements(Simulation simulation, CreateSimulationDto dto)
         {
-            var ordered = dto.Samples?.OrderBy(s => s.ElapsedMs).ToList() ?? new();
-            foreach (var sample in ordered)
+            var orderedSamples = dto.Samples.OrderBy(s => s.ElapsedMs).ToList();
+            foreach (var sample in orderedSamples)
             {
-                foreach (var metric in sample.Metrics)
+                var m = sample.Measurement;
+                simulation.Measurements.Add(new Measurement
                 {
-                    simulation.Measurements.Add(new Measurement
-                    {
-                        Simulation = simulation,
-                        MetricType = metric.MetricType,
-                        Value = metric.Value,
-                        IsValid = metric.IsValid,
-                        ElapsedMs = sample.ElapsedMs,
-                        Time = DateTime.UtcNow.AddMilliseconds(sample.ElapsedMs)
-                    });
-                }
+                    Simulation = simulation,
+                    ElapsedMs = sample.ElapsedMs,
+                    ForceValue = m.ForceValue,
+                    ForceIsValid = m.ForceIsValid,
+                    TouchValue = m.TouchValue,
+                    TouchIsValid = m.TouchIsValid,
+                    HandPositionValue = m.HandPositionValue,
+                    HandPositionIsValid = m.HandPositionIsValid,
+                    PositionValue = m.PositionValue,
+                    PositionIsValid = m.PositionIsValid,
+                    IsValid = m.IsValid,
+                    Time = DateTime.UtcNow.AddMilliseconds(sample.ElapsedMs)
+                });
             }
-            simulation.TotalErrors = simulation.Measurements.Count(m => !m.IsValid);
-            simulation.TotalDurationMs = ordered.Count == 0 ? 0 : ordered.Max(s => (long?)s.ElapsedMs) ?? 0;
-            simulation.AverageErrorsPerMeasurement = ordered.Count == 0 ? 0 : (double)simulation.TotalErrors / ordered.Count;
-            simulation.IsValid = simulation.TotalErrors == 0;
         }
 
         public async Task<SimulationSessionDto> Handle(CancelSimulationImmediateCommand request, CancellationToken cancellationToken)
         {
             var dto = request.Dto;
+            if (dto == null) throw new System.ArgumentNullException(nameof(request.Dto));
             if (dto.TrunkId <= 0) throw new System.ArgumentException("TrunkId inválido");
+            if (string.IsNullOrEmpty(request.PractitionerId)) throw new System.ArgumentException("PractitionerId requerido");
+            if (dto.Samples == null || dto.Samples.Count == 0) throw new System.ArgumentException("Samples requeridos");
+
             var simulation = new Simulation
             {
                 PractitionerId = request.PractitionerId,
                 TrunkId = dto.TrunkId,
-                State = SessionStateEnum.Cancelled
+                State = SessionStateEnum.Cancelled,
+                Comments = dto.Comments ?? string.Empty
             };
             FillMeasurements(simulation, dto);
-            simulation.EndDate = DateTime.UtcNow;
+            simulation.TotalErrors = simulation.Measurements.Count(m => !m.IsValid);
+            simulation.TotalSuccess = simulation.Measurements.Count(m => m.IsValid);
+            simulation.TotalMeasurements = simulation.Measurements.Count;
+            simulation.SuccessRate = simulation.TotalMeasurements > 0 ? (double)simulation.TotalSuccess / simulation.TotalMeasurements : 0;
+            simulation.TotalDurationMs = simulation.Measurements.Any() ? simulation.Measurements.Max(m => m.ElapsedMs ?? 0) : 0;
+            simulation.AverageErrorsPerMeasurement = simulation.TotalMeasurements > 0 ? (double)simulation.TotalErrors / simulation.TotalMeasurements : 0;
             _context.Simulations.Add(simulation);
             await _context.SaveChangesAsync(cancellationToken);
             return _mapper.Map<SimulationSessionDto>(simulation);
