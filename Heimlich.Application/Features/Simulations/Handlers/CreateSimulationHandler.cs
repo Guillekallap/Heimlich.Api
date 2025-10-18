@@ -5,6 +5,7 @@ using Heimlich.Domain.Entities;
 using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
+using System.Linq;
 
 namespace Heimlich.Application.Features.Simulations.Handlers
 {
@@ -21,27 +22,23 @@ namespace Heimlich.Application.Features.Simulations.Handlers
             var orderedSamples = dto.Samples.OrderBy(s => s.ElapsedMs).ToList();
             foreach (var sample in orderedSamples)
             {
-                foreach (var metric in sample.Metrics)
+                var m = sample.Measurement;
+                simulation.Measurements.Add(new Measurement
                 {
-                    simulation.Measurements.Add(new Measurement
-                    {
-                        Simulation = simulation,
-                        MetricType = metric.MetricType,
-                        Value = metric.Value,
-                        IsValid = metric.IsValid,
-                        ElapsedMs = sample.ElapsedMs,
-                        Time = DateTime.UtcNow.AddMilliseconds(sample.ElapsedMs)
-                    });
-                }
+                    Simulation = simulation,
+                    ElapsedMs = sample.ElapsedMs,
+                    ForceValue = m.ForceValue,
+                    ForceIsValid = m.ForceIsValid,
+                    TouchValue = m.TouchValue,
+                    TouchIsValid = m.TouchIsValid,
+                    HandPositionValue = m.HandPositionValue,
+                    HandPositionIsValid = m.HandPositionIsValid,
+                    PositionValue = m.PositionValue,
+                    PositionIsValid = m.PositionIsValid,
+                    IsValid = m.IsValid,
+                    Time = DateTime.UtcNow.AddMilliseconds(sample.ElapsedMs)
+                });
             }
-            var totalErrors = simulation.Measurements.Count(m => !m.IsValid);
-            var duration = orderedSamples.Max(s => (long?)s.ElapsedMs) ?? 0;
-            simulation.TotalErrors = dto.Result?.TotalErrors ?? totalErrors;
-            simulation.TotalDurationMs = dto.Result?.TotalDurationMs ?? duration;
-            simulation.AverageErrorsPerMeasurement = dto.Result?.AverageErrorsPerSample ?? (simulation.Measurements.Count == 0 ? 0 : (double)totalErrors / orderedSamples.Count);
-            simulation.IsValid = dto.Result?.IsValid ?? (totalErrors == 0);
-            simulation.Comments = dto.Result?.Comments;
-            simulation.EndDate = simulation.TotalDurationMs.HasValue ? simulation.CreationDate.AddMilliseconds(simulation.TotalDurationMs.Value) : null;
         }
 
         public async Task<SimulationSessionDto> Handle(CreateSimulationCommand request, CancellationToken cancellationToken)
@@ -56,9 +53,17 @@ namespace Heimlich.Application.Features.Simulations.Handlers
             {
                 PractitionerId = request.PractitionerId,
                 TrunkId = dto.TrunkId,
-                State = SessionStateEnum.Active
+                State = SessionStateEnum.Active,
+                Comments = dto.Comments ?? string.Empty
             };
             FillMeasurements(simulation, dto);
+            // Los totales y success rate los calcula y envía el mobile
+            simulation.TotalErrors = simulation.Measurements.Count(m => !m.IsValid);
+            simulation.TotalSuccess = simulation.Measurements.Count(m => m.IsValid);
+            simulation.TotalMeasurements = simulation.Measurements.Count;
+            simulation.SuccessRate = simulation.TotalMeasurements > 0 ? (double)simulation.TotalSuccess / simulation.TotalMeasurements : 0;
+            simulation.TotalDurationMs = simulation.Measurements.Any() ? simulation.Measurements.Max(m => m.ElapsedMs ?? 0) : 0;
+            simulation.AverageErrorsPerMeasurement = simulation.TotalMeasurements > 0 ? (double)simulation.TotalErrors / simulation.TotalMeasurements : 0;
             _context.Simulations.Add(simulation);
             await _context.SaveChangesAsync(cancellationToken);
             return _mapper.Map<SimulationSessionDto>(simulation);

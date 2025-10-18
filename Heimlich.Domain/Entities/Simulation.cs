@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Heimlich.Domain.Enums;
 
 namespace Heimlich.Domain.Entities
@@ -11,9 +13,12 @@ namespace Heimlich.Domain.Entities
         public User Practitioner { get; set; }
         public int TrunkId { get; set; }
         public Trunk Trunk { get; set; }
-        public long? TotalDurationMs { get; set; }
-        public int? TotalErrors { get; set; }
-        public double? AverageErrorsPerMeasurement { get; set; }
+        public long TotalDurationMs { get; set; }
+        public int TotalErrors { get; set; }
+        public int TotalSuccess { get; set; }
+        public int TotalMeasurements { get; set; }
+        public double SuccessRate { get; set; }
+        public double AverageErrorsPerMeasurement { get; set; }
         public bool? IsValid { get; set; }
         public string? Comments { get; set; }
         public SessionStateEnum State { get; set; } = SessionStateEnum.Active;

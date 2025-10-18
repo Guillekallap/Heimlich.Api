@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace Heimlich.Api.Controllers
 {
@@ -184,6 +185,7 @@ namespace Heimlich.Api.Controllers
                 Name = dto.Name,
                 MaxErrors = dto.MaxErrors,
                 MaxTime = dto.MaxTime,
+                MaxTimeInterval = dto.MaxTimeInterval,
                 IsDefault = false
             };
             _context.EvaluationConfigs.Add(config);
@@ -207,6 +209,7 @@ namespace Heimlich.Api.Controllers
             config.Name = dto.Name;
             config.MaxErrors = dto.MaxErrors;
             config.MaxTime = dto.MaxTime;
+            config.MaxTimeInterval = dto.MaxTimeInterval;
             await _context.SaveChangesAsync();
             return Ok(config);
         }
@@ -232,6 +235,15 @@ namespace Heimlich.Api.Controllers
                 .Select(u => new { u.Id, u.Fullname })
                 .ToListAsync();
             return Ok(practitioners);
+        }
+
+        // Obtener evaluaciones por grupo y practicante
+        [HttpGet("evaluations/by-group-practitioner")]
+        public async Task<IActionResult> GetEvaluationsByGroupAndPractitioner([FromQuery] int groupId, [FromQuery] string userId)
+        {
+            var query = new GetEvaluationsQuery(groupId, userId);
+            var result = await _mediator.Send(query);
+            return Ok(result);
         }
     }
 }

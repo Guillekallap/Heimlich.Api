@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <NoWin32Manifest>true</NoWin32Manifest>
+    <NuGetAuditLevel>high</NuGetAuditLevel>
   </PropertyGroup>
 
   <ItemGroup>

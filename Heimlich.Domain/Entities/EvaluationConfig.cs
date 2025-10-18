@@ -7,6 +7,7 @@ namespace Heimlich.Domain.Entities
         public Group? Group { get; set; }
         public int MaxErrors { get; set; }
         public int MaxTime { get; set; }
+        public int MaxTimeInterval { get; set; } // Lapso en segundos entre evaluaciones automáticas
         public string Name { get; set; } // Identificación desde mobile (único a nivel sistema)
         public bool IsDefault { get; set; }
         public DateTime CreationDate { get; set; } = DateTime.UtcNow;

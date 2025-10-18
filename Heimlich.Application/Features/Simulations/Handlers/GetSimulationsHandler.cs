@@ -29,20 +29,29 @@ namespace Heimlich.Application.Features.Simulations.Handlers
                 TrunkId = sim.TrunkId,
                 TotalDurationMs = sim.TotalDurationMs,
                 TotalErrors = sim.TotalErrors,
-                AverageErrorsPerSample = sim.AverageErrorsPerMeasurement,
+                TotalSuccess = sim.TotalSuccess,
+                TotalMeasurements = sim.TotalMeasurements,
+                SuccessRate = sim.SuccessRate,
+                AverageErrorsPerMeasurement = sim.AverageErrorsPerMeasurement,
                 IsValid = sim.IsValid,
                 Comments = sim.Comments,
                 Samples = sim.Measurements
-                    .GroupBy(m => m.ElapsedMs ?? 0)
-                    .Select(g => new SimulationSampleDto
+                    .OrderBy(m => m.ElapsedMs)
+                    .Select(m => new SimulationSampleDto
                     {
-                        ElapsedMs = g.Key,
-                        Metrics = g.Select(m => new SimulationMetricDto
+                        ElapsedMs = m.ElapsedMs ?? 0,
+                        Measurement = new SimulationMeasurementDto
                         {
-                            MetricType = m.MetricType,
-                            Value = m.Value,
+                            ForceValue = m.ForceValue,
+                            ForceIsValid = m.ForceIsValid,
+                            TouchValue = m.TouchValue,
+                            TouchIsValid = m.TouchIsValid,
+                            HandPositionValue = m.HandPositionValue,
+                            HandPositionIsValid = m.HandPositionIsValid,
+                            PositionValue = m.PositionValue,
+                            PositionIsValid = m.PositionIsValid,
                             IsValid = m.IsValid
-                        }).ToList()
+                        }
                     }).ToList()
             });
         }

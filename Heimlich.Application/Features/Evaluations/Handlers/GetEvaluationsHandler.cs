@@ -2,6 +2,7 @@
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace Heimlich.Application.Features.Evaluations.Handlers
 {
@@ -16,11 +17,15 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
         public async Task<List<EvaluationDto>> Handle(GetEvaluationsQuery request, CancellationToken cancellationToken)
         {
-            var query = _context.Evaluations.AsQueryable();
+            var query = _context.Evaluations.Include(e => e.Measurements).AsQueryable();
 
             if (request.GroupId.HasValue)
             {
-                // TODO: filtrar por grupo cuando Evaluation tenga relación directa a Group si se requiere
+                query = query.Where(e => e.GroupId == request.GroupId.Value);
+            }
+            if (!string.IsNullOrEmpty(request.EvaluatedUserId))
+            {
+                query = query.Where(e => e.EvaluatedUserId == request.EvaluatedUserId);
             }
 
             var evaluations = await query.ToListAsync(cancellationToken);
@@ -30,10 +35,30 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 Id = e.Id,
                 EvaluatorId = e.EvaluatorId,
                 EvaluatedUserId = e.EvaluatedUserId,
+                TrunkId = e.TrunkId,
+                GroupId = e.GroupId,
+                EvaluationConfigId = e.EvaluationConfigId,
                 Score = e.Score,
                 Comments = e.Comments,
                 IsValid = e.IsValid,
-                State = e.State
+                State = e.State,
+                TotalErrors = e.TotalErrors,
+                TotalSuccess = e.TotalSuccess,
+                TotalMeasurements = e.TotalMeasurements,
+                SuccessRate = e.SuccessRate,
+                Measurements = e.Measurements.OrderBy(m => m.ElapsedMs).Select(m => new EvaluationMeasurementDto
+                {
+                    ElapsedMs = m.ElapsedMs,
+                    ForceValue = m.ForceValue,
+                    ForceIsValid = m.ForceIsValid,
+                    TouchValue = m.TouchValue,
+                    TouchIsValid = m.TouchIsValid,
+                    HandPositionValue = m.HandPositionValue,
+                    HandPositionIsValid = m.HandPositionIsValid,
+                    PositionValue = m.PositionValue,
+                    PositionIsValid = m.PositionIsValid,
+                    IsValid = m.IsValid
+                }).ToList()
             }).ToList();
         }
     }

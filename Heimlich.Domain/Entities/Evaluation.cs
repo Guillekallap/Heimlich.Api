@@ -15,13 +15,17 @@ namespace Heimlich.Domain.Entities
         public Group? Group { get; set; }
         public int? EvaluationConfigId { get; set; }
         public EvaluationConfig? EvaluationConfig { get; set; }
-        public double? Score { get; set; }
+        public double Score { get; set; }
         public string? Comments { get; set; }
         public bool? IsValid { get; set; }
         public string? Signature { get; set; }
         public SessionStateEnum State { get; set; } = SessionStateEnum.Active;
         public DateTime CreationDate { get; set; } = DateTime.UtcNow;
         public DateTime? ValidatedAt { get; set; }
+        public int TotalErrors { get; set; }
+        public int TotalSuccess { get; set; }
+        public int TotalMeasurements { get; set; }
+        public double SuccessRate { get; set; }
         public ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
     }
 }
