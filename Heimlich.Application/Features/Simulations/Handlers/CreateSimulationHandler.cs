@@ -6,6 +6,8 @@ using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using System.Linq;
+using System;
+using System.Collections.Generic;
 
 namespace Heimlich.Application.Features.Simulations.Handlers
 {
@@ -17,28 +19,43 @@ namespace Heimlich.Application.Features.Simulations.Handlers
         public CreateSimulationHandler(HeimlichDbContext context, IMapper mapper)
         { _context = context; _mapper = mapper; }
 
-        private void FillMeasurements(Simulation simulation, CreateSimulationDto dto)
+        private void FillMeasurements(Simulation simulation, IEnumerable<SimulationSampleDto> samples)
         {
-            var orderedSamples = dto.Samples.OrderBy(s => s.ElapsedMs).ToList();
-            foreach (var sample in orderedSamples)
+            if (samples != null)
             {
-                var m = sample.Measurement;
-                simulation.Measurements.Add(new Measurement
+                foreach (var sample in samples)
                 {
-                    Simulation = simulation,
-                    ElapsedMs = sample.ElapsedMs,
-                    ForceValue = m.ForceValue,
-                    ForceIsValid = m.ForceIsValid,
-                    TouchValue = m.TouchValue,
-                    TouchIsValid = m.TouchIsValid,
-                    HandPositionValue = m.HandPositionValue,
-                    HandPositionIsValid = m.HandPositionIsValid,
-                    PositionValue = m.PositionValue,
-                    PositionIsValid = m.PositionIsValid,
-                    IsValid = m.IsValid,
-                    Time = DateTime.UtcNow.AddMilliseconds(sample.ElapsedMs)
-                });
+                    var m = sample.Measurement;
+                    simulation.Measurements.Add(new Measurement
+                    {
+                        Simulation = simulation,
+                        ElapsedMs = sample.ElapsedMs,
+                        ForceValue = m.ForceValue,
+                        ForceIsValid = m.ForceIsValid,
+                        TouchValue = m.TouchValue,
+                        TouchIsValid = m.TouchIsValid,
+                        HandPositionValue = m.HandPositionValue,
+                        HandPositionIsValid = m.HandPositionIsValid,
+                        PositionValue = m.PositionValue,
+                        PositionIsValid = m.PositionIsValid,
+                        IsValid = m.IsValid,
+                        Time = DateTime.UtcNow.AddMilliseconds(sample.ElapsedMs)
+                    });
+                }
             }
+        }
+
+        private static List<SimulationSampleDto> NormalizeSamplesSimple(List<SimulationSampleDto> samples)
+        {
+            if (samples == null || samples.Count == 0) return new List<SimulationSampleDto>();
+
+            var normalized = samples
+                .GroupBy(s => s.ElapsedMs)
+                .OrderBy(g => g.Key)
+                .Select(g => g.First())
+                .ToList();
+
+            return normalized;
         }
 
         public async Task<SimulationSessionDto> Handle(CreateSimulationCommand request, CancellationToken cancellationToken)
@@ -47,7 +64,9 @@ namespace Heimlich.Application.Features.Simulations.Handlers
             if (dto == null) throw new System.ArgumentNullException(nameof(request.Dto));
             if (dto.TrunkId <= 0) throw new System.ArgumentException("TrunkId inválido");
             if (string.IsNullOrEmpty(request.PractitionerId)) throw new System.ArgumentException("PractitionerId requerido");
-            if (dto.Samples == null || dto.Samples.Count == 0) throw new System.ArgumentException("Samples requeridos");
+
+            // Normalizar samples para evitar duplicados (mantenemos la primera por elapsedMs)
+            var normalizedSamples = NormalizeSamplesSimple(dto.Samples ?? new List<SimulationSampleDto>());
 
             var simulation = new Simulation
             {
@@ -56,7 +75,7 @@ namespace Heimlich.Application.Features.Simulations.Handlers
                 State = SessionStateEnum.Active,
                 Comments = dto.Comments ?? string.Empty
             };
-            FillMeasurements(simulation, dto);
+            FillMeasurements(simulation, normalizedSamples);
             // Los totales y success rate los calcula y envía el mobile
             simulation.TotalErrors = simulation.Measurements.Count(m => !m.IsValid);
             simulation.TotalSuccess = simulation.Measurements.Count(m => m.IsValid);

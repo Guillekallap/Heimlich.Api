@@ -112,6 +112,17 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Ejecutar migraciones y seeding al iniciar
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var db = services.GetRequiredService<HeimlichDbContext>();
+    var userManager = services.GetRequiredService<UserManager<User>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    db.Database.Migrate();
+    Heimlich.Infrastructure.Identity.SeedData.InitializeAsync(userManager, roleManager, db).GetAwaiter().GetResult();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

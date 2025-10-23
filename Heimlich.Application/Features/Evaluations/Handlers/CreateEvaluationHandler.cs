@@ -7,6 +7,8 @@ using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Collections.Generic;
+using System;
 
 namespace Heimlich.Application.Features.Evaluations.Handlers
 {
@@ -18,11 +20,11 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
         public CreateEvaluationHandler(HeimlichDbContext context, IMapper mapper)
         { _context = context; _mapper = mapper; }
 
-        private void FillMeasurements(Evaluation evaluation, CreateEvaluationDto dto)
+        private void FillMeasurements(Evaluation evaluation, IEnumerable<EvaluationMeasurementInputDto> measurements)
         {
-            if (dto.Measurements != null)
+            if (measurements != null)
             {
-                foreach (var m in dto.Measurements)
+                foreach (var m in measurements)
                 {
                     evaluation.Measurements.Add(new Measurement
                     {
@@ -43,9 +45,25 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             }
         }
 
+        // Simple normalization: if multiple measurements share the same ElapsedMs, pick the first one.
+        private static List<EvaluationMeasurementInputDto> NormalizeMeasurementsSimple(List<EvaluationMeasurementInputDto> measurements)
+        {
+            if (measurements == null || measurements.Count == 0) return new List<EvaluationMeasurementInputDto>();
+
+            var normalized = measurements
+                .GroupBy(m => m.ElapsedMs ?? 0)
+                .OrderBy(g => g.Key)
+                .Select(g => g.First())
+                .ToList();
+
+            return normalized;
+        }
+
         public async Task<EvaluationDto> Handle(CreateEvaluationCommand request, CancellationToken cancellationToken)
         {
             var dto = request.Dto;
+            var normalizedMeasurements = NormalizeMeasurementsSimple(dto.Measurements ?? new List<EvaluationMeasurementInputDto>());
+
             var evaluation = new Evaluation
             {
                 EvaluatorId = request.EvaluatorId,
@@ -56,11 +74,12 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 Score = dto.Score ?? 0,
                 State = SessionStateEnum.Active
             };
-            FillMeasurements(evaluation, dto);
-            // Los totales y success rate los calcula y envía el mobile
-            evaluation.TotalErrors = dto.Measurements.Count(m => !m.IsValid);
-            evaluation.TotalSuccess = dto.Measurements.Count(m => m.IsValid);
-            evaluation.TotalMeasurements = dto.Measurements.Count;
+
+            FillMeasurements(evaluation, normalizedMeasurements);
+            // Totals and success rate based on normalized measurements
+            evaluation.TotalErrors = normalizedMeasurements.Count(m => !m.IsValid);
+            evaluation.TotalSuccess = normalizedMeasurements.Count(m => m.IsValid);
+            evaluation.TotalMeasurements = normalizedMeasurements.Count;
             evaluation.SuccessRate = evaluation.TotalMeasurements > 0 ? (double)evaluation.TotalSuccess / evaluation.TotalMeasurements : 0;
             _context.Evaluations.Add(evaluation);
             await _context.SaveChangesAsync(cancellationToken);

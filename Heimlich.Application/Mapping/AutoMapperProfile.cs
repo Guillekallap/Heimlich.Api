@@ -18,8 +18,12 @@ namespace Heimlich.Application.Mapping
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => GroupStatusEnum.Active));
             CreateMap<EditGroupDto, Group>();
 
+            // Measurement mapping for evaluations
+            CreateMap<Measurement, EvaluationMeasurementDto>();
+
             // Evaluation mapping (incluir campos agregados)
-            CreateMap<Evaluation, EvaluationDto>();
+            CreateMap<Evaluation, EvaluationDto>()
+                .ForMember(dest => dest.Measurements, opt => opt.MapFrom(src => src.Measurements));
 
             // Simulation mapping centralizado
             CreateMap<Simulation, SimulationSessionDto>()
