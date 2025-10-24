@@ -4,9 +4,9 @@ using Heimlich.Domain.Entities;
 using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
 
 namespace Heimlich.Application.Features.Groups.Handlers
 {

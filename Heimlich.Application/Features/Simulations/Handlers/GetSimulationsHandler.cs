@@ -4,15 +4,17 @@ using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 namespace Heimlich.Application.Features.Simulations.Handlers
 {
     public class GetSimulationsHandler : IRequestHandler<GetSimulationsQuery, IEnumerable<SimulationSessionDto>>
     {
         private readonly HeimlichDbContext _context;
+        private readonly IMapper _mapper;
 
-        public GetSimulationsHandler(HeimlichDbContext context)
-        { _context = context; }
+        public GetSimulationsHandler(HeimlichDbContext context, IMapper mapper)
+        { _context = context; _mapper = mapper; }
 
         public async Task<IEnumerable<SimulationSessionDto>> Handle(GetSimulationsQuery request, CancellationToken cancellationToken)
         {
@@ -22,38 +24,9 @@ namespace Heimlich.Application.Features.Simulations.Handlers
                 .OrderByDescending(s => s.CreationDate)
                 .ToListAsync(cancellationToken);
 
-            return sims.Select(sim => new SimulationSessionDto
-            {
-                Id = sim.Id,
-                PractitionerId = sim.PractitionerId,
-                TrunkId = sim.TrunkId,
-                TotalDurationMs = sim.TotalDurationMs,
-                TotalErrors = sim.TotalErrors,
-                TotalSuccess = sim.TotalSuccess,
-                TotalMeasurements = sim.TotalMeasurements,
-                SuccessRate = sim.SuccessRate,
-                AverageErrorsPerMeasurement = sim.AverageErrorsPerMeasurement,
-                IsValid = sim.IsValid,
-                Comments = sim.Comments,
-                Samples = sim.Measurements
-                    .OrderBy(m => m.ElapsedMs)
-                    .Select(m => new SimulationSampleDto
-                    {
-                        ElapsedMs = m.ElapsedMs ?? 0,
-                        Measurement = new SimulationMeasurementDto
-                        {
-                            ForceValue = m.ForceValue,
-                            ForceIsValid = m.ForceIsValid,
-                            TouchValue = m.TouchValue,
-                            TouchIsValid = m.TouchIsValid,
-                            HandPositionValue = m.HandPositionValue,
-                            HandPositionIsValid = m.HandPositionIsValid,
-                            PositionValue = m.PositionValue,
-                            PositionIsValid = m.PositionIsValid,
-                            IsValid = m.IsValid
-                        }
-                    }).ToList()
-            });
+            var result = sims.Select(sim => _mapper.Map<SimulationSessionDto>(sim)).ToList();
+
+            return result;
         }
     }
 }

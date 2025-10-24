@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +55,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
     {
+        // Use camelCase naming for JSON by default so Swagger reflects client JSON names
+        o.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
         // Permitir enums como strings en JSON (ForceSensor, TouchSensor, etc.)
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
@@ -61,6 +64,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "Heimlich API", Version = "v1" });
+
+    // Enable XML comments if available
+    var xmlFile = System.IO.Path.ChangeExtension(System.Reflection.Assembly.GetEntryAssembly().Location, ".xml");
+    if (System.IO.File.Exists(xmlFile)) c.IncludeXmlComments(xmlFile);
 
     // Configuración para JWT Bearer
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -86,7 +93,13 @@ builder.Services.AddSwaggerGen(c =>
             new string[] {}
         }
     });
+
+    // add filters for examples and summaries
+    c.ExampleFilters();
 });
+
+// register example providers from Swashbuckle.Filters
+builder.Services.AddSwaggerExamplesFromAssemblies(System.AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddSingleton(provider =>
 {
@@ -126,7 +139,11 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Heimlich API v1");
+        c.DefaultModelsExpandDepth(-1); // hide schemas until expanded
+    });
 }
 
 app.UseHttpsRedirection();

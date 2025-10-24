@@ -1,7 +1,4 @@
-﻿using System;
-using Heimlich.Domain.Enums;
-
-namespace Heimlich.Domain.Entities
+﻿namespace Heimlich.Domain.Entities
 {
     public class Measurement
     {
@@ -13,17 +10,25 @@ namespace Heimlich.Domain.Entities
         public DateTime Time { get; set; }
         public long? ElapsedMs { get; set; }
 
-        // Nuevos campos para cada tipo de métrica
-        public string ForceValue { get; set; }
-        public bool ForceIsValid { get; set; }
-        public string TouchValue { get; set; }
-        public bool TouchIsValid { get; set; }
-        public string HandPositionValue { get; set; }
-        public bool HandPositionIsValid { get; set; }
-        public string PositionValue { get; set; }
-        public bool PositionIsValid { get; set; }
+        // Force value (string) and its validity/status
+        public string? ForceValue { get; set; }
 
-        // IsValid es true solo si todas las métricas son válidas
+        public bool ForceStatus { get; set; }
+
+        // Touch status (boolean)
+        public bool TouchStatus { get; set; }
+
+        // Angle in degrees (string) and its status
+        public string? AngleDeg { get; set; }
+
+        public bool AngleStatus { get; set; }
+
+        // Position message and overall status
+        public string? Message { get; set; }
+
+        public bool Status { get; set; }
+
+        // IsValid is true only if all metrics are valid
         public bool IsValid { get; set; }
     }
 }

@@ -5,9 +5,6 @@ using Heimlich.Domain.Entities;
 using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
-using System.Linq;
-using System;
-using System.Collections.Generic;
 
 namespace Heimlich.Application.Features.Simulations.Handlers
 {
@@ -19,35 +16,33 @@ namespace Heimlich.Application.Features.Simulations.Handlers
         public CreateSimulationHandler(HeimlichDbContext context, IMapper mapper)
         { _context = context; _mapper = mapper; }
 
-        private void FillMeasurements(Simulation simulation, IEnumerable<SimulationSampleDto> samples)
+        private void FillMeasurements(Simulation simulation, IEnumerable<SimulationMeasurementDto> measurements)
         {
-            if (samples != null)
+            if (measurements != null)
             {
-                foreach (var sample in samples)
+                foreach (var m in measurements)
                 {
-                    var m = sample.Measurement;
                     simulation.Measurements.Add(new Measurement
                     {
                         Simulation = simulation,
-                        ElapsedMs = sample.ElapsedMs,
+                        ElapsedMs = m.ElapsedMs,
                         ForceValue = m.ForceValue,
-                        ForceIsValid = m.ForceIsValid,
-                        TouchValue = m.TouchValue,
-                        TouchIsValid = m.TouchIsValid,
-                        HandPositionValue = m.HandPositionValue,
-                        HandPositionIsValid = m.HandPositionIsValid,
-                        PositionValue = m.PositionValue,
-                        PositionIsValid = m.PositionIsValid,
+                        ForceStatus = m.ForceStatus,
+                        TouchStatus = m.TouchStatus,
+                        AngleDeg = m.AngleDeg,
+                        AngleStatus = m.AngleStatus,
+                        Message = m.Message ?? string.Empty,
+                        Status = m.Status,
                         IsValid = m.IsValid,
-                        Time = DateTime.UtcNow.AddMilliseconds(sample.ElapsedMs)
+                        Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs)
                     });
                 }
             }
         }
 
-        private static List<SimulationSampleDto> NormalizeSamplesSimple(List<SimulationSampleDto> samples)
+        private static List<SimulationMeasurementDto> NormalizeSamplesSimple(List<SimulationMeasurementDto> samples)
         {
-            if (samples == null || samples.Count == 0) return new List<SimulationSampleDto>();
+            if (samples == null || samples.Count == 0) return new List<SimulationMeasurementDto>();
 
             var normalized = samples
                 .GroupBy(s => s.ElapsedMs)
@@ -65,8 +60,7 @@ namespace Heimlich.Application.Features.Simulations.Handlers
             if (dto.TrunkId <= 0) throw new System.ArgumentException("TrunkId inválido");
             if (string.IsNullOrEmpty(request.PractitionerId)) throw new System.ArgumentException("PractitionerId requerido");
 
-            // Normalizar samples para evitar duplicados (mantenemos la primera por elapsedMs)
-            var normalizedSamples = NormalizeSamplesSimple(dto.Samples ?? new List<SimulationSampleDto>());
+            var normalizedMeasurements = NormalizeSamplesSimple(dto.Measurements ?? new List<SimulationMeasurementDto>());
 
             var simulation = new Simulation
             {
@@ -75,8 +69,8 @@ namespace Heimlich.Application.Features.Simulations.Handlers
                 State = SessionStateEnum.Active,
                 Comments = dto.Comments ?? string.Empty
             };
-            FillMeasurements(simulation, normalizedSamples);
-            // Los totales y success rate los calcula y envía el mobile
+            FillMeasurements(simulation, normalizedMeasurements);
+
             simulation.TotalErrors = simulation.Measurements.Count(m => !m.IsValid);
             simulation.TotalSuccess = simulation.Measurements.Count(m => m.IsValid);
             simulation.TotalMeasurements = simulation.Measurements.Count;
@@ -85,6 +79,7 @@ namespace Heimlich.Application.Features.Simulations.Handlers
             simulation.AverageErrorsPerMeasurement = simulation.TotalMeasurements > 0 ? (double)simulation.TotalErrors / simulation.TotalMeasurements : 0;
             _context.Simulations.Add(simulation);
             await _context.SaveChangesAsync(cancellationToken);
+
             return _mapper.Map<SimulationSessionDto>(simulation);
         }
     }

@@ -1,4 +1,11 @@
-public class AssignPractitionerDto
+using System.Text.Json.Serialization;
+using System.Collections.Generic;
+
+namespace Heimlich.Application.DTOs
 {
-    public IList<string> PractitionerIds { get; set; }
+    public class AssignPractitionerDto
+    {
+        [JsonPropertyName("practitionerIds")]
+        public IList<string> PractitionerIds { get; set; }
+    }
 }

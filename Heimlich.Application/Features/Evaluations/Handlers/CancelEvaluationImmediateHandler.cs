@@ -27,15 +27,14 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                         Evaluation = evaluation,
                         ElapsedMs = m.ElapsedMs,
                         ForceValue = m.ForceValue,
-                        ForceIsValid = m.ForceIsValid,
-                        TouchValue = m.TouchValue,
-                        TouchIsValid = m.TouchIsValid,
-                        HandPositionValue = m.HandPositionValue,
-                        HandPositionIsValid = m.HandPositionIsValid,
-                        PositionValue = m.PositionValue,
-                        PositionIsValid = m.PositionIsValid,
+                        ForceStatus = m.ForceStatus,
+                        TouchStatus = m.TouchStatus,
+                        AngleDeg = m.AngleDeg,
+                        AngleStatus = m.AngleStatus,
+                        Message = m.Message,
+                        Status = m.Status,
                         IsValid = m.IsValid,
-                        Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs ?? 0)
+                        Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs)
                     });
                 }
             }

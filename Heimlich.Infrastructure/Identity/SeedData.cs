@@ -47,7 +47,7 @@ namespace Heimlich.Infrastructure.Identity
                     Email = "admin@gmaill.com",
                     Fullname = "admin"
                 };
-                await userManager.CreateAsync(user, sharedPassword); 
+                await userManager.CreateAsync(user, sharedPassword);
                 await userManager.AddToRoleAsync(user, "Admin");
             }
 
@@ -60,7 +60,7 @@ namespace Heimlich.Infrastructure.Identity
                     Email = "juanunlam@gmaill.com",
                     Fullname = "Juan Lopez"
                 };
-                await userManager.CreateAsync(user, sharedPassword); 
+                await userManager.CreateAsync(user, sharedPassword);
                 await userManager.AddToRoleAsync(user, "Instructor");
             }
 
@@ -73,7 +73,7 @@ namespace Heimlich.Infrastructure.Identity
                     Email = "mariaunlam@gmaill.com",
                     Fullname = "Maria Perez"
                 };
-                await userManager.CreateAsync(user, sharedPassword); 
+                await userManager.CreateAsync(user, sharedPassword);
                 await userManager.AddToRoleAsync(user, "Instructor");
             }
 

@@ -1,9 +1,8 @@
 ﻿using Heimlich.Application.DTOs;
+using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using Heimlich.Domain.Enums;
 
 namespace Heimlich.Application.Features.Evaluations.Handlers
 {

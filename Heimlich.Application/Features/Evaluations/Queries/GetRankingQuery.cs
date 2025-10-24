@@ -1,6 +1,5 @@
 ﻿using Heimlich.Application.DTOs;
 using MediatR;
-using System.Collections.Generic;
 
 public class GetRankingQuery : IRequest<List<PractitionerRankingDto>>
 {

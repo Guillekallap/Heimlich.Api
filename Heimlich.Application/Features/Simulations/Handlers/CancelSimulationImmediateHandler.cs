@@ -18,24 +18,22 @@ namespace Heimlich.Application.Features.Simulations.Handlers
 
         private void FillMeasurements(Simulation simulation, CreateSimulationDto dto)
         {
-            var orderedSamples = dto.Samples.OrderBy(s => s.ElapsedMs).ToList();
-            foreach (var sample in orderedSamples)
+            var ordered = dto.Measurements.OrderBy(s => s.ElapsedMs).ToList();
+            foreach (var m in ordered)
             {
-                var m = sample.Measurement;
                 simulation.Measurements.Add(new Measurement
                 {
                     Simulation = simulation,
-                    ElapsedMs = sample.ElapsedMs,
+                    ElapsedMs = m.ElapsedMs,
                     ForceValue = m.ForceValue,
-                    ForceIsValid = m.ForceIsValid,
-                    TouchValue = m.TouchValue,
-                    TouchIsValid = m.TouchIsValid,
-                    HandPositionValue = m.HandPositionValue,
-                    HandPositionIsValid = m.HandPositionIsValid,
-                    PositionValue = m.PositionValue,
-                    PositionIsValid = m.PositionIsValid,
+                    ForceStatus = m.ForceStatus,
+                    TouchStatus = m.TouchStatus,
+                    AngleDeg = m.AngleDeg,
+                    AngleStatus = m.AngleStatus,
+                    Message = m.Message ?? string.Empty,
+                    Status = m.Status,
                     IsValid = m.IsValid,
-                    Time = DateTime.UtcNow.AddMilliseconds(sample.ElapsedMs)
+                    Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs)
                 });
             }
         }
@@ -46,7 +44,7 @@ namespace Heimlich.Application.Features.Simulations.Handlers
             if (dto == null) throw new System.ArgumentNullException(nameof(request.Dto));
             if (dto.TrunkId <= 0) throw new System.ArgumentException("TrunkId inválido");
             if (string.IsNullOrEmpty(request.PractitionerId)) throw new System.ArgumentException("PractitionerId requerido");
-            if (dto.Samples == null || dto.Samples.Count == 0) throw new System.ArgumentException("Samples requeridos");
+            if (dto.Measurements == null || dto.Measurements.Count == 0) throw new System.ArgumentException("Measurements requeridos");
 
             var simulation = new Simulation
             {

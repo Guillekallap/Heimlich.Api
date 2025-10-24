@@ -3,6 +3,7 @@ using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Heimlich.Application.Features.Evaluations.Handlers
 {
@@ -30,6 +31,10 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
             var evaluations = await query.ToListAsync(cancellationToken);
 
+            // get default evaluation config id (if exists)
+            var defaultConfig = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.IsDefault, cancellationToken);
+            int? defaultConfigId = defaultConfig?.Id;
+
             return evaluations.Select(e => new EvaluationDto
             {
                 Id = e.Id,
@@ -37,7 +42,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 EvaluatedUserId = e.EvaluatedUserId,
                 TrunkId = e.TrunkId,
                 GroupId = e.GroupId,
-                EvaluationConfigId = e.EvaluationConfigId,
+                EvaluationConfigId = e.EvaluationConfigId ?? defaultConfigId,
                 Score = e.Score,
                 Comments = e.Comments,
                 IsValid = e.IsValid,
@@ -49,14 +54,14 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 Measurements = e.Measurements.OrderBy(m => m.ElapsedMs).Select(m => new EvaluationMeasurementDto
                 {
                     ElapsedMs = m.ElapsedMs,
-                    ForceValue = m.ForceValue,
-                    ForceIsValid = m.ForceIsValid,
-                    TouchValue = m.TouchValue,
-                    TouchIsValid = m.TouchIsValid,
-                    HandPositionValue = m.HandPositionValue,
-                    HandPositionIsValid = m.HandPositionIsValid,
-                    PositionValue = m.PositionValue,
-                    PositionIsValid = m.PositionIsValid,
+                    ForceValue = m.ForceValue ?? string.Empty,
+                    ForceIsValid = m.ForceStatus,
+                    TouchValue = m.TouchStatus ? "true" : "false",
+                    TouchIsValid = m.TouchStatus,
+                    HandPositionValue = m.AngleDeg ?? string.Empty,
+                    HandPositionIsValid = m.AngleStatus,
+                    PositionValue = m.Message,
+                    PositionIsValid = m.Status,
                     IsValid = m.IsValid
                 }).ToList()
             }).ToList();

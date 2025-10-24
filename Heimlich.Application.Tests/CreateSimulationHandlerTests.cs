@@ -2,16 +2,8 @@ using AutoMapper;
 using Heimlich.Application.DTOs;
 using Heimlich.Application.Features.Simulations.Commands;
 using Heimlich.Application.Features.Simulations.Handlers;
-using Heimlich.Domain.Entities;
 using Heimlich.Infrastructure.Identity;
-using Moq;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
 
 namespace Heimlich.Application.Tests
 {
@@ -38,11 +30,11 @@ namespace Heimlich.Application.Tests
             var dto = new CreateSimulationDto
             {
                 TrunkId = 1,
-                Samples = new List<SimulationSampleDto>
+                Measurements = new List<SimulationMeasurementDto>
                 {
-                    new SimulationSampleDto { ElapsedMs = 0, Measurement = new SimulationMeasurementDto { ForceValue = "10", ForceIsValid = true, TouchValue = "5", TouchIsValid = true, HandPositionValue = "7", HandPositionIsValid = true, PositionValue = "8", PositionIsValid = true, IsValid = true } },
-                    new SimulationSampleDto { ElapsedMs = 0, Measurement = new SimulationMeasurementDto { ForceValue = "11", ForceIsValid = false, TouchValue = "6", TouchIsValid = false, HandPositionValue = "8", HandPositionIsValid = false, PositionValue = "9", PositionIsValid = false, IsValid = false } },
-                    new SimulationSampleDto { ElapsedMs = 1000, Measurement = new SimulationMeasurementDto { ForceValue = "10", ForceIsValid = true, TouchValue = "5", TouchIsValid = true, HandPositionValue = "7", HandPositionIsValid = true, PositionValue = "8", PositionIsValid = true, IsValid = true } }
+                    new SimulationMeasurementDto { ElapsedMs = 0, ForceValue = "10", ForceStatus = true, TouchStatus = true, AngleDeg = "7", AngleStatus = true, Status = true, IsValid = true },
+                    new SimulationMeasurementDto { ElapsedMs = 0, ForceValue = "11", ForceStatus = false, TouchStatus = false, AngleDeg = "8", AngleStatus = false, Status = false, IsValid = false },
+                    new SimulationMeasurementDto { ElapsedMs = 1000, ForceValue = "10", ForceStatus = true, TouchStatus = true, AngleDeg = "7", AngleStatus = true, Status = true, IsValid = true }
                 }
             };
 

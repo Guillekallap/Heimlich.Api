@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Heimlich.Domain.Enums;
 
 namespace Heimlich.Domain.Entities

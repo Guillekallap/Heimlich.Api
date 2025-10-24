@@ -60,11 +60,12 @@ namespace Heimlich.Infrastructure.Identity
                 .HasForeignKey(ev => ev.GroupId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // Preserve historical Evaluation.EvaluationConfigId references: prevent cascade set-null on config deletion
             builder.Entity<Evaluation>()
                 .HasOne(ev => ev.EvaluationConfig)
                 .WithMany()
                 .HasForeignKey(ev => ev.EvaluationConfigId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Simulation>()
                 .HasOne(s => s.Practitioner)

@@ -1,6 +1,5 @@
 using Heimlich.Application.DTOs;
 using MediatR;
-using System.Collections.Generic;
 
 namespace Heimlich.Application.Features.Evaluations.Queries
 {

@@ -43,9 +43,9 @@ namespace Heimlich.Application.Tests
                 Score = 80,
                 Measurements = new List<EvaluationMeasurementInputDto>
                 {
-                    new EvaluationMeasurementInputDto { ElapsedMs = 0, ForceValue = "10", ForceIsValid = true, TouchValue = "5", TouchIsValid = true, HandPositionValue = "7", HandPositionIsValid = true, PositionValue = "8", PositionIsValid = true, IsValid = true },
-                    new EvaluationMeasurementInputDto { ElapsedMs = 0, ForceValue = "11", ForceIsValid = false, TouchValue = "6", TouchIsValid = false, HandPositionValue = "8", HandPositionIsValid = false, PositionValue = "9", PositionIsValid = false, IsValid = false },
-                    new EvaluationMeasurementInputDto { ElapsedMs = 1000, ForceValue = "10", ForceIsValid = true, TouchValue = "5", TouchIsValid = true, HandPositionValue = "7", HandPositionIsValid = true, PositionValue = "8", PositionIsValid = true, IsValid = true }
+                    new EvaluationMeasurementInputDto { ElapsedMs = 0, Result = "OK", AngleDeg = "7", AngleStatus = true, ForceValue = "10", ForceStatus = true, TouchStatus = true, Status = true, Message = "8", IsValid = true },
+                    new EvaluationMeasurementInputDto { ElapsedMs = 0, Result = "NOK", AngleDeg = "8", AngleStatus = false, ForceValue = "11", ForceStatus = false, TouchStatus = false, Status = false, Message = "9", IsValid = false },
+                    new EvaluationMeasurementInputDto { ElapsedMs = 1000, Result = "OK", AngleDeg = "7", AngleStatus = true, ForceValue = "10", ForceStatus = true, TouchStatus = true, Status = true, Message = "8", IsValid = true }
                 }
             };
 

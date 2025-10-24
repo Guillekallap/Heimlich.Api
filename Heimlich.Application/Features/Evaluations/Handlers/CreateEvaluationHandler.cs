@@ -30,16 +30,16 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                     {
                         Evaluation = evaluation,
                         ElapsedMs = m.ElapsedMs,
+                        // assign string values directly
                         ForceValue = m.ForceValue,
-                        ForceIsValid = m.ForceIsValid,
-                        TouchValue = m.TouchValue,
-                        TouchIsValid = m.TouchIsValid,
-                        HandPositionValue = m.HandPositionValue,
-                        HandPositionIsValid = m.HandPositionIsValid,
-                        PositionValue = m.PositionValue,
-                        PositionIsValid = m.PositionIsValid,
+                        ForceStatus = m.ForceStatus,
+                        TouchStatus = m.TouchStatus,
+                        AngleDeg = m.AngleDeg,
+                        AngleStatus = m.AngleStatus,
+                        Message = m.Message,
+                        Status = m.Status,
                         IsValid = m.IsValid,
-                        Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs ?? 0)
+                        Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs)
                     });
                 }
             }
@@ -51,7 +51,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             if (measurements == null || measurements.Count == 0) return new List<EvaluationMeasurementInputDto>();
 
             var normalized = measurements
-                .GroupBy(m => m.ElapsedMs ?? 0)
+                .GroupBy(m => m.ElapsedMs)
                 .OrderBy(g => g.Key)
                 .Select(g => g.First())
                 .ToList();
@@ -64,12 +64,30 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             var dto = request.Dto;
             var normalizedMeasurements = NormalizeMeasurementsSimple(dto.Measurements ?? new List<EvaluationMeasurementInputDto>());
 
+            // determine evaluation config for this new evaluation
+            int? evaluationConfigId = null;
+            if (dto.GroupId.HasValue)
+            {
+                var link = await _context.EvaluationConfigGroups
+                    .Include(l => l.EvaluationConfig)
+                    .FirstOrDefaultAsync(l => l.GroupId == dto.GroupId.Value && l.EvaluationConfig.Status == EvaluationConfigStatusEnum.Active, cancellationToken);
+                if (link != null)
+                    evaluationConfigId = link.EvaluationConfigId;
+            }
+
+            if (evaluationConfigId == null)
+            {
+                var defaultConfig = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.IsDefault && c.Status == EvaluationConfigStatusEnum.Active, cancellationToken);
+                evaluationConfigId = defaultConfig?.Id;
+            }
+
             var evaluation = new Evaluation
             {
                 EvaluatorId = request.EvaluatorId,
                 EvaluatedUserId = dto.EvaluatedUserId,
                 TrunkId = dto.TrunkId,
                 GroupId = dto.GroupId,
+                EvaluationConfigId = evaluationConfigId,
                 Comments = dto.Comments,
                 Score = dto.Score ?? 0,
                 State = SessionStateEnum.Active

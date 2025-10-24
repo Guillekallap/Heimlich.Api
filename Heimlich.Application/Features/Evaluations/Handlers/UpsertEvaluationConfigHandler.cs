@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Heimlich.Application.Features.Evaluations.Commands;
 using Heimlich.Domain.Entities;
 using Heimlich.Infrastructure.Identity;
@@ -11,7 +9,9 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
     public class UpsertEvaluationConfigHandler : IRequestHandler<UpsertEvaluationConfigCommand, EvaluationConfig>
     {
         private readonly HeimlichDbContext _context;
-        public UpsertEvaluationConfigHandler(HeimlichDbContext context) { _context = context; }
+
+        public UpsertEvaluationConfigHandler(HeimlichDbContext context)
+        { _context = context; }
 
         public async Task<EvaluationConfig> Handle(UpsertEvaluationConfigCommand request, CancellationToken cancellationToken)
         {
