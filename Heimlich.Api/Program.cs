@@ -12,6 +12,10 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Application Insights: register telemetry and enable logging to AI
+builder.Services.AddApplicationInsightsTelemetry();
+builder.Logging.AddApplicationInsights();
+
 var config = builder.Configuration;
 var connectionString = config.GetConnectionString("DefaultConnection")
                        ?? throw new InvalidOperationException("Cadena de conexión no encontrada.");
@@ -60,6 +64,11 @@ builder.Services.AddControllers()
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 builder.Services.AddEndpointsApiExplorer();
+
+// Read flags from configuration so behavior in production can be controlled from App Service settings
+var enableSwagger = builder.Configuration.GetValue<bool>("EnableSwagger", false);
+var applyMigrationsOnStartup = builder.Configuration.GetValue<bool>("ApplyMigrationsOnStartup", false);
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "Heimlich API", Version = "v1" });
@@ -118,18 +127,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Ejecutar migraciones y seeding al iniciar
-using (var scope = app.Services.CreateScope())
+// Ejecutar migraciones y seeding solo si está explicitamente habilitado en configuración
+if (applyMigrationsOnStartup)
 {
-    var services = scope.ServiceProvider;
-    var db = services.GetRequiredService<HeimlichDbContext>();
-    var userManager = services.GetRequiredService<UserManager<User>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    db.Database.Migrate();
-    Heimlich.Infrastructure.Identity.SeedData.InitializeAsync(userManager, roleManager, db).GetAwaiter().GetResult();
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var db = services.GetRequiredService<HeimlichDbContext>();
+        var userManager = services.GetRequiredService<UserManager<User>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        db.Database.Migrate();
+        Heimlich.Infrastructure.Identity.SeedData.InitializeAsync(userManager, roleManager, db).GetAwaiter().GetResult();
+    }
 }
 
-if (app.Environment.IsDevelopment())
+// Swagger enabled only in Development OR if explicitly enabled by configuration (disabled by default in production)
+if (app.Environment.IsDevelopment() || enableSwagger)
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
@@ -137,6 +150,22 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Heimlich API v1");
         c.DefaultModelsExpandDepth(-1); // hide schemas until expanded
     });
+}
+
+// Production-specific middleware
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "text/plain";
+            await context.Response.WriteAsync("An unexpected server error occurred.");
+        });
+    });
+
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
