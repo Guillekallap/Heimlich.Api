@@ -19,8 +19,9 @@ namespace Heimlich.Application.Mapping
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => GroupStatusEnum.Active));
             CreateMap<EditGroupDto, Group>();
 
-            // Map Measurement -> EvaluationMeasurementDto with explicit mappings
+            // Map Measurement -> EvaluationMeasurementDto with explicit mappings (include Id)
             CreateMap<Measurement, EvaluationMeasurementDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.ElapsedMs, opt => opt.MapFrom(src => src.ElapsedMs))
                 .ForMember(dest => dest.ForceValue, opt => opt.MapFrom(src => src.ForceValue ?? string.Empty))
                 .ForMember(dest => dest.ForceIsValid, opt => opt.MapFrom(src => src.ForceStatus))
@@ -51,7 +52,7 @@ namespace Heimlich.Application.Mapping
             CreateMap<Evaluation, EvaluationDto>()
                 .ForMember(dest => dest.Measurements, opt => opt.MapFrom(src => src.Measurements.OrderBy(m => m.ElapsedMs)));
 
-            // Keep Simulation mapping simple: map scalar fields; measurements are mapped manually in handlers
+            // Keep Simulation mapping simple: map scalar fields; measurements are mapped by AutoMapper
             CreateMap<Simulation, SimulationSessionDto>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.PractitionerId, opt => opt.MapFrom(src => src.PractitionerId))

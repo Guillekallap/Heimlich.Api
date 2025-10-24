@@ -39,7 +39,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                         Message = m.Message,
                         Status = m.Status,
                         IsValid = m.IsValid,
-                        Time = DateTime.UtcNow.AddMilliseconds(m.ElapsedMs)
+                        Time = DateTimeOffset.FromUnixTimeMilliseconds(m.Timestamp).UtcDateTime
                     });
                 }
             }
@@ -90,15 +90,31 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 EvaluationConfigId = evaluationConfigId,
                 Comments = dto.Comments,
                 Score = dto.Score ?? 0,
-                State = SessionStateEnum.Active
+                State = SessionStateEnum.Active,
+                TotalDurationMs = dto.TotalDurationMs ?? 0,
+                TotalMeasurements = dto.TotalMeasurements ?? 0,
+                TotalSuccess = dto.TotalSuccess ?? 0,
+                TotalErrors = dto.TotalErrors ?? 0,
+                SuccessRate = dto.SuccessRate ?? 0,
+                AverageErrorsPerMeasurement = dto.AverageErrorsPerMeasurement ?? 0
             };
 
             FillMeasurements(evaluation, normalizedMeasurements);
-            // Totals and success rate based on normalized measurements
-            evaluation.TotalErrors = normalizedMeasurements.Count(m => !m.IsValid);
-            evaluation.TotalSuccess = normalizedMeasurements.Count(m => m.IsValid);
-            evaluation.TotalMeasurements = normalizedMeasurements.Count;
-            evaluation.SuccessRate = evaluation.TotalMeasurements > 0 ? (double)evaluation.TotalSuccess / evaluation.TotalMeasurements : 0;
+
+            // If client didn't provide aggregates, compute them
+            if (!dto.TotalMeasurements.HasValue)
+                evaluation.TotalMeasurements = normalizedMeasurements.Count;
+            if (!dto.TotalErrors.HasValue)
+                evaluation.TotalErrors = normalizedMeasurements.Count(m => !m.IsValid);
+            if (!dto.TotalSuccess.HasValue)
+                evaluation.TotalSuccess = normalizedMeasurements.Count(m => m.IsValid);
+            if (!dto.SuccessRate.HasValue)
+                evaluation.SuccessRate = evaluation.TotalMeasurements > 0 ? (double)evaluation.TotalSuccess / evaluation.TotalMeasurements : 0;
+            if (!dto.TotalDurationMs.HasValue)
+                evaluation.TotalDurationMs = evaluation.Measurements.Any() ? evaluation.Measurements.Max(m => m.ElapsedMs ?? 0) : 0;
+            if (!dto.AverageErrorsPerMeasurement.HasValue)
+                evaluation.AverageErrorsPerMeasurement = evaluation.TotalMeasurements > 0 ? (double)evaluation.TotalErrors / evaluation.TotalMeasurements : 0;
+
             _context.Evaluations.Add(evaluation);
             await _context.SaveChangesAsync(cancellationToken);
             return _mapper.Map<EvaluationDto>(evaluation);

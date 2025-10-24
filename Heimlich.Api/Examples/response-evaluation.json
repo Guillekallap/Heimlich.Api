@@ -1,0 +1,44 @@
+{
+  "id": 1,
+  "evaluatorId": "2cb8669e-5e63-46e9-89aa-812ee878e439",
+  "evaluatedUserId": "2e33ec0a-2820-4000-926a-dff6f726b235",
+  "trunkId": 1,
+  "groupId": 1,
+  "evaluationConfigId": 1,
+  "score": 85,
+  "comments": "Validación aprobada",
+  "is_valid": true,
+  "state": "Validated",
+  "totalErrors": 1,
+  "totalSuccess": 9,
+  "totalMeasurements": 10,
+  "successRate": 0.9,
+  "measurements": [
+    {
+      "id": 101,
+      "elapsedMs": 0,
+      "force_value": "11.3",
+      "force_status": true,
+      "touch_value": "true",
+      "touch_status": true,
+      "hand_position_value": "7",
+      "hand_position_status": true,
+      "position_value": "pos-ok",
+      "position_is_valid": true,
+      "is_valid": true
+    },
+    {
+      "id": 102,
+      "elapsedMs": 1000,
+      "force_value": "6.0",
+      "force_status": false,
+      "touch_value": "true",
+      "touch_status": true,
+      "hand_position_value": "12",
+      "hand_position_status": false,
+      "position_value": "force-low",
+      "position_is_valid": false,
+      "is_valid": false
+    }
+  ]
+}

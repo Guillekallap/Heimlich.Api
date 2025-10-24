@@ -4,16 +4,19 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
 
 namespace Heimlich.Application.Features.Evaluations.Handlers
 {
     public class GetEvaluationsHandler : IRequestHandler<GetEvaluationsQuery, List<EvaluationDto>>
     {
         private readonly HeimlichDbContext _context;
+        private readonly IMapper _mapper;
 
-        public GetEvaluationsHandler(HeimlichDbContext context)
+        public GetEvaluationsHandler(HeimlichDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<List<EvaluationDto>> Handle(GetEvaluationsQuery request, CancellationToken cancellationToken)
@@ -31,40 +34,10 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
             var evaluations = await query.ToListAsync(cancellationToken);
 
-            // get default evaluation config id (if exists)
-            var defaultConfig = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.IsDefault, cancellationToken);
-            int? defaultConfigId = defaultConfig?.Id;
+            // Map using AutoMapper (measurements are already included so Ids will be available)
+            var result = _mapper.Map<List<EvaluationDto>>(evaluations);
 
-            return evaluations.Select(e => new EvaluationDto
-            {
-                Id = e.Id,
-                EvaluatorId = e.EvaluatorId,
-                EvaluatedUserId = e.EvaluatedUserId,
-                TrunkId = e.TrunkId,
-                GroupId = e.GroupId,
-                EvaluationConfigId = e.EvaluationConfigId ?? defaultConfigId,
-                Score = e.Score,
-                Comments = e.Comments,
-                IsValid = e.IsValid,
-                State = e.State,
-                TotalErrors = e.TotalErrors,
-                TotalSuccess = e.TotalSuccess,
-                TotalMeasurements = e.TotalMeasurements,
-                SuccessRate = e.SuccessRate,
-                Measurements = e.Measurements.OrderBy(m => m.ElapsedMs).Select(m => new EvaluationMeasurementDto
-                {
-                    ElapsedMs = m.ElapsedMs,
-                    ForceValue = m.ForceValue ?? string.Empty,
-                    ForceIsValid = m.ForceStatus,
-                    TouchValue = m.TouchStatus ? "true" : "false",
-                    TouchIsValid = m.TouchStatus,
-                    HandPositionValue = m.AngleDeg ?? string.Empty,
-                    HandPositionIsValid = m.AngleStatus,
-                    PositionValue = m.Message,
-                    PositionIsValid = m.Status,
-                    IsValid = m.IsValid
-                }).ToList()
-            }).ToList();
+            return result;
         }
     }
 }

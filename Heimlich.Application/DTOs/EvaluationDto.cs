@@ -53,6 +53,9 @@ namespace Heimlich.Application.DTOs
 
     public class EvaluationMeasurementDto
     {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
         [JsonPropertyName("elapsedMs")]
         public long? ElapsedMs { get; set; }
 

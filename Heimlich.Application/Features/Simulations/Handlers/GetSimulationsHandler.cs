@@ -5,7 +5,6 @@ using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
-
 namespace Heimlich.Application.Features.Simulations.Handlers
 {
     public class GetSimulationsHandler : IRequestHandler<GetSimulationsQuery, IEnumerable<SimulationSessionDto>>

@@ -1,0 +1,20 @@
+{
+  "trunkId": 1,
+  "comments": "Cancel requested",
+  "measurements": [
+    {
+      "id": null,
+      "timestamp": 1700000400000,
+      "elapsedMs": 0,
+      "result": "NOK",
+      "angle_deg": "0",
+      "angle_status": false,
+      "force_value": "0",
+      "force_status": false,
+      "touch_status": false,
+      "status": false,
+      "message": "no-data",
+      "is_valid": false
+    }
+  ]
+}

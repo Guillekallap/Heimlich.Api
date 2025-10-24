@@ -26,6 +26,8 @@ namespace Heimlich.Domain.Entities
         public int TotalSuccess { get; set; }
         public int TotalMeasurements { get; set; }
         public double SuccessRate { get; set; }
+        public long TotalDurationMs { get; set; }
+        public double AverageErrorsPerMeasurement { get; set; }
         public ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
     }
 }

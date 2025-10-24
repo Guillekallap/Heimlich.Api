@@ -1,0 +1,43 @@
+{
+  "evaluatedUserId": "GuillermoUnlam",
+  "trunkId": 1,
+  "groupId": 2,
+  "comments": "Evaluación práctica",
+  "score": 78.5,
+  "totalDurationMs": 150000,
+  "totalMeasurements": 10,
+  "totalSuccess": 9,
+  "totalErrors": 1,
+  "successRate": 0.9,
+  "averageErrorsPerMeasurement": 0.1,
+  "measurements": [
+    {
+      "id": null,
+      "timestamp": 1700000000000,
+      "elapsedMs": 0,
+      "result": "CORRECT",
+      "angle_deg": "7",
+      "angle_status": true,
+      "force_value": "11.3",
+      "force_status": true,
+      "touch_status": true,
+      "status": true,
+      "message": "pos-ok",
+      "is_valid": true
+    },
+    {
+      "id": null,
+      "timestamp": 1700000001000,
+      "elapsedMs": 1000,
+      "result": "INCORRECT",
+      "angle_deg": "12",
+      "angle_status": false,
+      "force_value": "6.0",
+      "force_status": false,
+      "touch_status": true,
+      "status": false,
+      "message": "force-low",
+      "is_valid": false
+    }
+  ]
+}

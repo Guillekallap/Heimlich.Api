@@ -12,6 +12,24 @@ namespace Heimlich.Application.DTOs
 
         [JsonPropertyName("comments")]
         public string? Comments { get; set; }
+
+        [JsonPropertyName("totalDurationMs")]
+        public long? TotalDurationMs { get; set; }
+
+        [JsonPropertyName("totalMeasurements")]
+        public int? TotalMeasurements { get; set; }
+
+        [JsonPropertyName("totalSuccess")]
+        public int? TotalSuccess { get; set; }
+
+        [JsonPropertyName("totalErrors")]
+        public int? TotalErrors { get; set; }
+
+        [JsonPropertyName("successRate")]
+        public double? SuccessRate { get; set; }
+
+        [JsonPropertyName("averageErrorsPerMeasurement")]
+        public double? AverageErrorsPerMeasurement { get; set; }
     }
 
     public class SimulationMeasurementDto

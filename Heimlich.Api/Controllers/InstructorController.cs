@@ -220,20 +220,6 @@ namespace Heimlich.Api.Controllers
             return Ok(config);
         }
 
-        [HttpDelete("evaluation-configs/{id}")]
-        public async Task<IActionResult> DeleteEvaluationConfigById(int id)
-        {
-            // kept for compatibility: soft-delete route by id (internal)
-            var config = await _context.EvaluationConfigs.Include(c => c.EvaluationConfigGroups).FirstOrDefaultAsync(c => c.Id == id);
-            if (config == null) return NotFound();
-            if (config.IsDefault) return BadRequest("No se puede eliminar la configuración default");
-            if (config.EvaluationConfigGroups.Any()) return BadRequest("No se puede eliminar una configuración vinculada a grupos");
-
-            config.Status = Heimlich.Domain.Enums.EvaluationConfigStatusEnum.Inactive;
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-
         // Listar practicantes simples
         [HttpGet("practitioners")]
         public async Task<IActionResult> GetPractitioners()

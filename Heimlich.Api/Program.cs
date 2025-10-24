@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
-using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -93,13 +92,7 @@ builder.Services.AddSwaggerGen(c =>
             new string[] {}
         }
     });
-
-    // add filters for examples and summaries
-    c.ExampleFilters();
 });
-
-// register example providers from Swashbuckle.Filters
-builder.Services.AddSwaggerExamplesFromAssemblies(System.AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddSingleton(provider =>
 {

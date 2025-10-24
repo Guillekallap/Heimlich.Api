@@ -1,0 +1,37 @@
+{
+  "evaluatedUserId": "CarlosUnlam",
+  "trunkId": 1,
+  "groupId": 2,
+  "comments": "Evaluación sin agregados",
+  "score": 65,
+  "measurements": [
+    {
+      "id": null,
+      "timestamp": 1700000100000,
+      "elapsedMs": 0,
+      "result": "CORRECT",
+      "angle_deg": "8",
+      "angle_status": true,
+      "force_value": "10.0",
+      "force_status": true,
+      "touch_status": true,
+      "status": true,
+      "message": "ok",
+      "is_valid": true
+    },
+    {
+      "id": null,
+      "timestamp": 1700000102000,
+      "elapsedMs": 2000,
+      "result": "INCORRECT",
+      "angle_deg": "15",
+      "angle_status": false,
+      "force_value": "5.0",
+      "force_status": false,
+      "touch_status": false,
+      "status": false,
+      "message": "bad",
+      "is_valid": false
+    }
+  ]
+}
