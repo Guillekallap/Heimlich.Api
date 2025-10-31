@@ -67,9 +67,10 @@ namespace Heimlich.Application.Tests
             var evalMapped = _mapper.Map<EvaluationMeasurementDto>(measurement);
             Assert.Equal(measurement.ElapsedMs, evalMapped.ElapsedMs);
             Assert.Equal(measurement.ForceValue, evalMapped.ForceValue);
-            Assert.Equal(measurement.ForceStatus, evalMapped.ForceIsValid);
-            Assert.Equal(measurement.AngleDeg, evalMapped.HandPositionValue);
-            Assert.Equal(measurement.Message, evalMapped.PositionValue);
+            // Updated assertions for unified names
+            Assert.Equal(measurement.ForceStatus, evalMapped.ForceStatus);
+            Assert.Equal(measurement.AngleDeg, evalMapped.AngleDeg);
+            Assert.Equal(measurement.Message, evalMapped.Message);
             Assert.Equal(measurement.IsValid, evalMapped.IsValid);
         }
     }

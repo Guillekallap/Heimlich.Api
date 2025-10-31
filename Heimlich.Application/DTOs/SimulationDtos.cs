@@ -77,6 +77,9 @@ namespace Heimlich.Application.DTOs
         [JsonPropertyName("id")]
         public int Id { get; set; }
 
+        [JsonPropertyName("creationDate")]
+        public DateTime CreationDate { get; set; }
+
         [JsonPropertyName("trunkId")]
         public int TrunkId { get; set; }
 

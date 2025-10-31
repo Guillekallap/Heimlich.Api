@@ -7,8 +7,10 @@ using Heimlich.Domain.Entities;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Security.Claims;
 
 namespace Heimlich.Api.Controllers
@@ -20,11 +22,13 @@ namespace Heimlich.Api.Controllers
     {
         private readonly IMediator _mediator;
         private readonly HeimlichDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public InstructorController(IMediator mediator, HeimlichDbContext context)
+        public InstructorController(IMediator mediator, HeimlichDbContext context, UserManager<User> userManager)
         {
             _mediator = mediator;
             _context = context;
+            _userManager = userManager;
         }
 
         // Crear grupo
@@ -137,6 +141,45 @@ namespace Heimlich.Api.Controllers
             return Ok(result);
         }
 
+        // Permanently delete an evaluation (useful for manual fixes via Postman)
+        [HttpDelete("evaluations/{id}")]
+        public async Task<IActionResult> DeleteEvaluation(int id)
+        {
+            var evaluation = await _context.Evaluations
+                .Include(e => e.Measurements)
+                .FirstOrDefaultAsync(e => e.Id == id);
+            if (evaluation == null) return NotFound();
+
+            // Remove measurements explicitly (in case cascade is not configured)
+            if (evaluation.Measurements != null && evaluation.Measurements.Any())
+            {
+                _context.RemoveRange(evaluation.Measurements);
+            }
+
+            _context.Evaluations.Remove(evaluation);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // Permanently delete a simulation (manual use from Postman)
+        [HttpDelete("simulations/{id}")]
+        public async Task<IActionResult> DeleteSimulation(int id)
+        {
+            var simulation = await _context.Simulations
+                .Include(s => s.Measurements)
+                .FirstOrDefaultAsync(s => s.Id == id);
+            if (simulation == null) return NotFound();
+
+            if (simulation.Measurements != null && simulation.Measurements.Any())
+            {
+                _context.RemoveRange(simulation.Measurements);
+            }
+
+            _context.Simulations.Remove(simulation);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         // Ranking por grupos del instructor
         [HttpGet("ranking")]
         public async Task<IActionResult> GetRanking()
@@ -220,15 +263,28 @@ namespace Heimlich.Api.Controllers
             return Ok(config);
         }
 
-        // Listar practicantes simples
+        // Listar practicantes simples (todos o por grupo)
         [HttpGet("practitioners")]
-        public async Task<IActionResult> GetPractitioners()
+        public async Task<IActionResult> GetPractitioners([FromQuery] int? groupId)
         {
-            var practitioners = await _context.Users
-                .Where(u => u.UserGroups.Any() && u.UserGroups.All(ug => ug.Group.Status == Heimlich.Domain.Enums.GroupStatusEnum.Active))
-                .Select(u => new { u.Id, u.Fullname })
-                .ToListAsync();
-            return Ok(practitioners);
+            if (groupId.HasValue)
+            {
+                // Return practitioners that are members of the specified group
+                var exists = await _context.Groups.AnyAsync(g => g.Id == groupId.Value && g.Status == Heimlich.Domain.Enums.GroupStatusEnum.Active);
+                if (!exists) return NotFound();
+
+                var practitionersInGroup = await _context.UserGroups
+                    .Where(ug => ug.GroupId == groupId.Value)
+                    .Select(ug => new { id = ug.User.Id, fullname = ug.User.Fullname })
+                    .ToListAsync();
+
+                return Ok(practitionersInGroup);
+            }
+
+            // Return all users that have the 'Practitioner' role
+            var practitioners = await _userManager.GetUsersInRoleAsync("Practitioner");
+            var result = practitioners.Select(u => new { id = u.Id, fullname = u.Fullname }).ToList();
+            return Ok(result);
         }
 
         // Obtener evaluaciones por grupo y practicante

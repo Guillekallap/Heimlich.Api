@@ -35,6 +35,12 @@ namespace Heimlich.Application.DTOs
         [JsonPropertyName("state")]
         public SessionStateEnum State { get; set; }
 
+        [JsonPropertyName("creationDate")]
+        public DateTime CreationDate { get; set; }
+
+        [JsonPropertyName("validatedAt")]
+        public DateTime? ValidatedAt { get; set; }
+
         [JsonPropertyName("totalErrors")]
         public int TotalErrors { get; set; }
 
@@ -47,41 +53,52 @@ namespace Heimlich.Application.DTOs
         [JsonPropertyName("successRate")]
         public double SuccessRate { get; set; }
 
+        [JsonPropertyName("totalDurationMs")]
+        public long TotalDurationMs { get; set; }
+
+        [JsonPropertyName("averageErrorsPerMeasurement")]
+        public double AverageErrorsPerMeasurement { get; set; }
+
         [JsonPropertyName("measurements")]
-        public IList<EvaluationMeasurementDto> Measurements { get; set; }
+        public IList<EvaluationMeasurementDto> Measurements { get; set; } = new List<EvaluationMeasurementDto>();
     }
 
+    // Align with SimulationMeasurementDto
     public class EvaluationMeasurementDto
     {
+        // optional measurement id
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        public int? Id { get; set; }
+
+        [JsonPropertyName("timestamp")]
+        public long Timestamp { get; set; }
 
         [JsonPropertyName("elapsedMs")]
-        public long? ElapsedMs { get; set; }
+        public long ElapsedMs { get; set; }
+
+        [JsonPropertyName("result")]
+        public string Result { get; set; }
+
+        [JsonPropertyName("angle_deg")]
+        public string AngleDeg { get; set; }
+
+        [JsonPropertyName("angle_status")]
+        public bool AngleStatus { get; set; }
 
         [JsonPropertyName("force_value")]
         public string ForceValue { get; set; }
 
         [JsonPropertyName("force_status")]
-        public bool ForceIsValid { get; set; }
-
-        [JsonPropertyName("touch_value")]
-        public string TouchValue { get; set; }
+        public bool ForceStatus { get; set; }
 
         [JsonPropertyName("touch_status")]
-        public bool TouchIsValid { get; set; }
+        public bool TouchStatus { get; set; }
 
-        [JsonPropertyName("hand_position_value")]
-        public string HandPositionValue { get; set; }
+        [JsonPropertyName("status")]
+        public bool Status { get; set; }
 
-        [JsonPropertyName("hand_position_status")]
-        public bool HandPositionIsValid { get; set; }
-
-        [JsonPropertyName("position_value")]
-        public string PositionValue { get; set; }
-
-        [JsonPropertyName("position_is_valid")]
-        public bool PositionIsValid { get; set; }
+        [JsonPropertyName("message")]
+        public string? Message { get; set; }
 
         [JsonPropertyName("is_valid")]
         public bool IsValid { get; set; }
