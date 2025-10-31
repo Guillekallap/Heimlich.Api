@@ -287,10 +287,15 @@ namespace Heimlich.Api.Controllers
             return Ok(result);
         }
 
-        // Obtener evaluaciones por grupo y practicante
+        // Obtener evaluaciones por grupo y practicante (filtros opcionales)
         [HttpGet("evaluations/by-group-practitioner")]
-        public async Task<IActionResult> GetEvaluationsByGroupAndPractitioner([FromQuery] int groupId, [FromQuery] string userId)
+        public async Task<IActionResult> GetEvaluationsByGroupAndPractitioner([FromQuery] int? groupId, [FromQuery] string? userId)
         {
+            if (!groupId.HasValue && string.IsNullOrWhiteSpace(userId))
+            {
+                return BadRequest("Se requiere al menos 'groupId' o 'userId' como parámetro de consulta.");
+            }
+
             var query = new GetEvaluationsQuery(groupId, userId);
             var result = await _mediator.Send(query);
             return Ok(result);
