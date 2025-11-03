@@ -36,6 +36,9 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 Id = group.Id,
                 Name = group.Name,
                 Description = group.Description,
+                CreationDate = group.CreationDate,
+                EvaluationDate = group.EvaluationDate,
+                Status = group.Status.ToString(),
                 PractitionerIds = group.UserGroups.Select(ug => ug.UserId).ToList()
             };
         }

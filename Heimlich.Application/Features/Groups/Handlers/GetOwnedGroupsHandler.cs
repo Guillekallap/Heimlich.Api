@@ -33,6 +33,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 Name = g.Name,
                 Description = g.Description,
                 CreationDate = g.CreationDate,
+                EvaluationDate = g.EvaluationDate,
                 Status = g.Status.ToString(),
                 OwnerInstructorId = g.OwnerInstructorId,
                 OwnerInstructorName = ownerName,
