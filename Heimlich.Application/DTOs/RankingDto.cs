@@ -8,6 +8,9 @@ namespace Heimlich.Application.DTOs
         [JsonPropertyName("userId")]
         public string UserId { get; set; }
 
+        [JsonPropertyName("fullName")]
+        public string FullName { get; set; }
+
         [JsonPropertyName("averageScore")]
         public double AverageScore { get; set; }
 

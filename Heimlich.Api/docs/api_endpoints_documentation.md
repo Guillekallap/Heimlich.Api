@@ -108,7 +108,7 @@ Notas sobre despliegue y base de datos
 ---
 
 ### Perfil de usuario
-- URL: `/api/auth/profile?userId={id}`
+- URL: `/api/auth/profile?userId={id}`  
 - Método: `GET`
 - Headers: `Authorization: Bearer {token}`
 - Respuesta: `200 OK`, datos del usuario. Ejemplo:
@@ -235,6 +235,7 @@ Notas sobre despliegue y base de datos
 - Método: `DELETE`
 - Headers: `Authorization: Bearer {token}`
 - Respuesta: `204 No Content`.
+
 
 ---
 
@@ -439,6 +440,7 @@ Casos de uso y ejemplos:
     "evaluationConfigId": 2,
     "score": 70,
     "comments": "Evaluación...",
+
     "state": "Active",
     "creationDate": "2025-01-24T21:00:00Z",
     "validatedAt": null,
@@ -614,6 +616,7 @@ Casos de uso y ejemplos:
 - Headers: `Authorization: Bearer {token}`
 - Respuesta: `204 No Content`.
 
+
 ---
 
 ### Restablecer configuración a default
@@ -705,6 +708,7 @@ Casos de uso y ejemplos:
 - Respuesta: `200 OK`. Ejemplo:
 ```json
 [
+
   {
     "id": 1,
     "practitionerId": "PRACTICANTE_ID",
@@ -756,6 +760,36 @@ Casos de uso y ejemplos:
   ]
   ```
 
+### Ranking por grupos del instructor
+- URL: `/api/instructor/ranking`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve un ranking (resumen por grupos) para el instructor autenticado. La estructura incluye, por grupo, indicadores agregados (p.ej. promedios de score, cantidad de evaluaciones, tasas de éxito) para ayudar a comparar desempeños entre grupos.
+- Ejemplo de response (200 OK):
+```json
+[
+  {
+    "groupId": 10,
+    "groupName": "Grupo A",
+    "groupAverage": 78.6,
+    "practitioners": [
+      {
+        "userId": "PRACTICANTE_GUID_1",
+        "fullName": "María González",
+        "averageScore": 82.5,
+        "evaluationCount": 12
+      },
+      {
+        "userId": "PRACTICANTE_GUID_2",
+        "fullName": "Carlos Ruiz",
+        "averageScore": 74.7,
+        "evaluationCount": 8
+      }
+    ]
+  }
+]
+```
+
 ### Eliminar evaluación permanentemente (sólo uso manual)
 - URL: `/api/instructor/evaluations/{id}`
 - Método: `DELETE`
@@ -775,6 +809,13 @@ Casos de uso y ejemplos:
   - Request DELETE `https://{HOST}/api/instructor/simulations/789`
   - Headers: `Authorization: Bearer <TOKEN>`
   - Response: `204 No Content`
+
+---
+
+### Endpoints de manejo rápido para administracción (incluye asignación/desasignación en evaluaciones)
+
+- Asignar practicante a evaluación (POST) `https://{HOST}/api/instructor/evaluations/{evaluationId}/assign-practitioner/{userId}`
+- Desasignar practicante de evaluación (POST) `https://{HOST}/api/instructor/evaluations/{evaluationId}/unassign-practitioner`
 
 ---
 
@@ -810,8 +851,8 @@ Casos de uso y ejemplos:
 ### 4. Campo `EvaluatedUserFullName` agregado a Evaluaciones
 - **Qué cambió:** Las respuestas de evaluaciones ahora incluyen el nombre completo del practicante evaluado.
 - **Endpoints afectados:**
-  - `GET /api/instructor/evaluations` - response incluye `evaluatedUserFullName`
-  - `GET /api/instructor/evaluations/by-group-practitioner` - response incluye `evaluatedUserFullName`
+  - `GET /api/instructor/evaluaciones` - response incluye `evaluatedUserFullName`
+  - `GET /api/instructor/evaluaciones/by-group-practitioner` - response incluye `evaluatedUserFullName`
   - `POST /api/instructor/evaluations/{id}/validate` - response incluye `evaluatedUserFullName`
 - **Beneficio:** No es necesario hacer llamadas adicionales para obtener el nombre del practicante.
 

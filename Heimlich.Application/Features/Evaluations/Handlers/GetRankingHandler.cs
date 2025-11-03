@@ -18,6 +18,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
         public async Task<List<PractitionerRankingDto>> Handle(GetRankingQuery request, CancellationToken cancellationToken)
         {
             var query = _context.Evaluations
+                .Include(e => e.EvaluatedUser)
                 .Where(e => e.State == SessionStateEnum.Active || e.State == SessionStateEnum.Validated)
                 .AsQueryable();
 
@@ -26,6 +27,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 .Select(g => new PractitionerRankingDto
                 {
                     UserId = g.Key,
+                    FullName = g.First().EvaluatedUser != null ? g.First().EvaluatedUser.Fullname : "",
                     AverageScore = g.Average(e => e.Score),
                     EvaluationCount = g.Count()
                 }).ToListAsync(cancellationToken);
