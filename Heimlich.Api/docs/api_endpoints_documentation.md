@@ -153,20 +153,24 @@ Notas sobre despliegue y base de datos
 {
   "name": "Grupo A",
   "description": "Entrenamiento inicial",
+  "evaluationDate": "2025-02-15T10:00:00Z",
   "practitionerIds": ["USER_ID_1", "USER_ID_2"],
   "evaluationConfigId": 1
 }
 ```
+- **Nota:** `evaluationDate` es **obligatorio** - fecha en que se programará la evaluación del grupo.
 - Respuesta: `200 OK`, datos del grupo creado. Ejemplo:
 ```json
 {
   "id": 123,
   "name": "Grupo A",
   "description": "Entrenamiento inicial",
-  "practitionerIds": ["USER_ID_1", "USER_ID_2"],
-  "evaluationConfigId": 1,
-  "createdBy": "INSTRUCTOR_ID",
-  "createdAt": "2025-10-24T20:00:00Z"
+  "creationDate": "2025-01-24T20:00:00Z",
+  "evaluationDate": "2025-02-15T10:00:00Z",
+  "status": "Active",
+  "ownerInstructorId": "INSTRUCTOR_ID",
+  "ownerInstructorName": "Juan Pérez",
+  "practitionerIds": ["USER_ID_1", "USER_ID_2"]
 }
 ```
 
@@ -183,8 +187,12 @@ Notas sobre despliegue y base de datos
     "id": 123,
     "name": "Grupo A",
     "description": "Entrenamiento inicial",
-    "practitionerIds": ["USER_ID_1", "USER_ID_2"],
-    "evaluationConfigId": 1
+    "creationDate": "2025-01-24T20:00:00Z",
+    "evaluationDate": "2025-02-15T10:00:00Z",
+    "status": "Active",
+    "ownerInstructorId": "INSTRUCTOR_ID",
+    "ownerInstructorName": "Juan Pérez",
+    "practitionerIds": ["USER_ID_1", "USER_ID_2"]
   }
 ]
 ```
@@ -200,15 +208,22 @@ Notas sobre despliegue y base de datos
 {
   "name": "Grupo A Editado",
   "description": "Nueva descripción",
+  "evaluationDate": "2025-02-20T14:00:00Z",
   "practitionerIds": ["USER_ID_1", "USER_ID_3"]
 }
 ```
+- **Nota:** `evaluationDate` es **obligatorio**.
 - Respuesta: `200 OK`. Ejemplo:
 ```json
 {
   "id": 123,
   "name": "Grupo A Editado",
   "description": "Nueva descripción",
+  "creationDate": "2025-01-24T20:00:00Z",
+  "evaluationDate": "2025-02-20T14:00:00Z",
+  "status": "Active",
+  "ownerInstructorId": "INSTRUCTOR_ID",
+  "ownerInstructorName": "Juan Pérez",
   "practitionerIds": ["USER_ID_1", "USER_ID_3"]
 }
 ```
@@ -244,7 +259,7 @@ Notas sobre despliegue y base de datos
   {
     "id": 123,
     "name": "Grupo A",
-    "evaluationConfigId": 1,
+    "evaluationDate": "2025-02-15T10:00:00Z",
     "assignedTo": "PRACTICANTE_ID"
   }
 ]
@@ -266,7 +281,7 @@ Notas sobre despliegue y base de datos
   "evaluatedUserId": "PRACTICANTE_GUID_123",
   "trunkId": 1,
   "groupId": 10,
-  "comments": "Evaluación inicial - prueba Postman con 10 mediciones. Reglas: cada medición con al menos un status false cuenta como error; cada error resta 10 puntos del score inicial 100.",
+  "comments": "Evaluación inicial - prueba Postman con 10 mediciones.",
   "score": 70,
   "measurements": [
     {
@@ -274,123 +289,6 @@ Notas sobre despliegue y base de datos
       "elapsedMs": 10000,
       "result": "OK",
       "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "32",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140010000,
-      "elapsedMs": 11000,
-      "result": "OK",
-      "angle_deg": "1.2",
-      "angle_status": true,
-      "force_value": "31",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140020000,
-      "elapsedMs": 12000,
-      "result": "OUT_OF_RANGE",
-      "angle_deg": "5.0",
-      "angle_status": false,
-      "force_value": "28",
-      "force_status": true,
-      "touch_status": true,
-      "status": false,
-      "message": "angle out of range",
-      "is_valid": false
-    },
-    {
-      "timestamp": 1698140030000,
-      "elapsedMs": 13000,
-      "result": "OK",
-      "angle_deg": "0.5",
-      "angle_status": true,
-      "force_value": "30",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140040000,
-      "elapsedMs": 14000,
-      "result": "OK",
-      "angle_deg": "0.8",
-      "angle_status": true,
-      "force_value": "33",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140050000,
-      "elapsedMs": 15000,
-      "result": "TOUCH_FAIL",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "29",
-      "force_status": true,
-      "touch_status": false,
-      "status": false,
-      "message": "touch sensor missed",
-      "is_valid": false
-    },
-    {
-      "timestamp": 1698140060000,
-      "elapsedMs": 16000,
-      "result": "OK",
-      "angle_deg": "0.2",
-      "angle_status": true,
-      "force_value": "34",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140070000,
-      "elapsedMs": 17000,
-      "result": "OK",
-      "angle_deg": "0.6",
-      "angle_status": true,
-      "force_value": "31",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140080000,
-      "elapsedMs": 18000,
-      "result": "FORCE_FAIL",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "15",
-      "force_status": false,
-      "touch_status": true,
-      "status": false,
-      "message": "force below threshold",
-      "is_valid": false
-    },
-    {
-      "timestamp": 1698140090000,
-      "elapsedMs": 19000,
-      "result": "OK",
-      "angle_deg": "0.4",
       "angle_status": true,
       "force_value": "32",
       "force_status": true,
@@ -408,28 +306,31 @@ Notas sobre despliegue y base de datos
   "averageErrorsPerMeasurement": 0.3
 }
 ```
-- Respuesta esperada (ejemplo): `200 OK` con el objeto de la evaluación creada incluyendo agregados y la lista de mediciones. Ejemplo de response (resumen):
+- Respuesta esperada (ejemplo): `200 OK` con el objeto de la evaluación creada. Ejemplo de response:
 ```json
 {
   "id": 456,
   "evaluatorId": "INSTRUCTOR_GUID_1",
   "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "evaluatedUserFullName": "María González",
   "trunkId": 1,
   "groupId": 10,
   "evaluationConfigId": 2,
   "score": 70,
   "comments": "Evaluación inicial - prueba Postman con 10 mediciones...",
-  "is_valid": null,
   "state": "Active",
+  "creationDate": "2025-01-24T21:00:00Z",
+  "validatedAt": null,
   "totalErrors": 3,
   "totalSuccess": 7,
   "totalMeasurements": 10,
   "successRate": 0.7,
   "totalDurationMs": 145000,
   "averageErrorsPerMeasurement": 0.3,
-  "measurements": [ /* objetos de medición con los mismos campos enviados y el id/time asignado */ ]
+  "measurements": [ /* objetos de medición */ ]
 }
 ```
+- **Nota:** Ya no se incluye el campo `isValid` en la respuesta (fue eliminado de la entidad).
 
 ---
 
@@ -443,27 +344,27 @@ Notas sobre despliegue y base de datos
 ```json
 {
   "score": 92,
-  "is_valid": true,
   "comments": "Validación final: cumple con los requisitos",
   "signature": "firmaInstructorEjemploBase64==",
   "evaluationConfigId": 1
 }
 ```
-- Respuesta esperada: `200 OK` con mensaje o el objeto evaluado actualizado. Ejemplo:
+- **Nota:** El campo `is_valid` fue eliminado del body (ya no se usa).
+- Respuesta esperada: `200 OK` con el objeto evaluado actualizado. Ejemplo:
 ```json
 {
-  "message": "Evaluation validated",
-  "evaluation": {
-    "id": 456,
-    "score": 92,
-    "is_valid": true,
-    "validatedAt": "2025-10-24T21:30:00Z",
-    "signature": "firmaInstructorEjemploBase64==",
-    "totalErrors": 3,
-    "totalSuccess": 7,
-    "totalMeasurements": 10,
-    "successRate": 0.7
-  }
+  "id": 456,
+  "evaluatorId": "INSTRUCTOR_GUID_1",
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "evaluatedUserFullName": "María González",
+  "score": 92,
+  "state": "Validated",
+  "validatedAt": "2025-01-24T21:30:00Z",
+  "totalErrors": 3,
+  "totalSuccess": 7,
+  "totalMeasurements": 10,
+  "successRate": 0.7,
+  "measurements": []
 }
 ```
 
@@ -483,42 +384,34 @@ Notas sobre despliegue y base de datos
 - URL: `/api/instructor/evaluations`
 - Método: `GET`
 - Headers: `Authorization: Bearer {token}`
-- Descripción: Devuelve todas las evaluaciones creadas por el instructor autenticado. Puede incluir muchas evaluaciones de distintos grupos y practicantes.
-- Ejemplo de response (mantener formato original):
+- Descripción: Devuelve todas las evaluaciones creadas por el instructor autenticado.
+- Ejemplo de response:
 ```json
-{
-  "id": 1,
-  "evaluatorId": "INSTRUCTOR_ID",
-  "evaluatedUserId": "PRACTICANTE_ID",
-  "trunkId": 1,
-  "groupId": 2,
-  "evaluationConfigId": 1,
-  "score": 90,
-  "comments": "Buen desempeño",
-  "isValid": true,
-  "state": "Validated",
-  "totalErrors": 1,
-  "totalSuccess": 3,
-  "totalMeasurements": 4,
-  "successRate": 0.75,
-  "measurements": [
-    {
-      "timestamp": 1698140000000,
-      "elapsedMs": 10000,
-      "result": "OK",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "30",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    }
-    // ...más mediciones
-  ]
-}
+[
+  {
+    "id": 1,
+    "evaluatorId": "INSTRUCTOR_ID",
+    "evaluatedUserId": "PRACTICANTE_ID",
+    "evaluatedUserFullName": "Carlos Ruiz",
+    "trunkId": 1,
+    "groupId": 2,
+    "evaluationConfigId": 1,
+    "score": 90,
+    "comments": "Buen desempeño",
+    "state": "Validated",
+    "creationDate": "2025-01-24T20:00:00Z",
+    "validatedAt": "2025-01-24T21:00:00Z",
+    "totalErrors": 1,
+    "totalSuccess": 3,
+    "totalMeasurements": 4,
+    "successRate": 0.75,
+    "totalDurationMs": 30000,
+    "averageErrorsPerMeasurement": 0.25,
+    "measurements": []
+  }
+]
 ```
+- **Nota:** Ahora incluye `evaluatedUserFullName` (nombre completo del practicante evaluado).
 
 ---
 
@@ -526,41 +419,96 @@ Notas sobre despliegue y base de datos
 - URL: `/api/instructor/evaluations/by-group-practitioner?groupId={groupId}&userId={userId}`
 - Método: `GET`
 - Headers: `Authorization: Bearer {token}`
-- Respuesta: `200 OK`. Ejemplo (mantener formato original):
+- Descripción: Devuelve evaluaciones filtradas por `groupId`, por `userId` (practicante) o por ambos. Ambos parámetros son opcionales pero se requiere al menos uno; si no se provee ninguno el endpoint responde `400 Bad Request`.
+
+Casos de uso y ejemplos:
+
+1) **Filtrar por ambos (grupo + practicante)**
+- Request: `/api/instructor/evaluations/by-group-practitioner?groupId=10&userId=PRACTICANTE_GUID_123`
+- Comportamiento: devuelve evaluaciones del grupo `10` realizadas al practicante `PRACTICANTE_GUID_123`.
+- Ejemplo de response (200 OK):
+```json
+[
+  {
+    "id": 456,
+    "evaluatorId": "INSTRUCTOR_GUID_1",
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "trunkId": 1,
+    "groupId": 10,
+    "evaluationConfigId": 2,
+    "score": 70,
+    "comments": "Evaluación...",
+    "state": "Active",
+    "creationDate": "2025-01-24T21:00:00Z",
+    "validatedAt": null,
+    "totalErrors": 3,
+    "totalSuccess": 7,
+    "totalMeasurements": 10,
+    "successRate": 0.7,
+    "measurements": []
+  }
+]
+```
+
+2) **Filtrar sólo por grupo**
+- Request: `/api/instructor/evaluations/by-group-practitioner?groupId=10`
+- Comportamiento: devuelve todas las evaluaciones que pertenecen al grupo `10` (de todos los practicantes del grupo).
+- Ejemplo de response (200 OK):
+```json
+[
+  { 
+    "id": 456, 
+    "evaluatedUserId": "PRACTICANTE_A",
+    "evaluatedUserFullName": "Ana López",
+    "groupId": 10, 
+    "score": 70 
+  },
+  { 
+    "id": 457, 
+    "evaluatedUserId": "PRACTICANTE_B",
+    "evaluatedUserFullName": "Luis Martín",
+    "groupId": 10, 
+    "score": 85 
+  }
+]
+```
+
+3) **Filtrar sólo por practicante (userId)**
+- Request: `/api/instructor/evaluations/by-group-practitioner?userId=PRACTICANTE_GUID_123`
+- Comportamiento: devuelve todas las evaluaciones del practicante `PRACTICANTE_GUID_123` (de todos los grupos donde tenga evaluaciones).
+- Ejemplo de response (200 OK):
+```json
+[
+  { 
+    "id": 456, 
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "groupId": 10, 
+    "score": 70 
+  },
+  { 
+    "id": 498, 
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "groupId": 12, 
+    "score": 88 
+  }
+]
+```
+
+4) **Sin filtros (error)**
+- Request: `/api/instructor/evaluations/by-group-practitioner` (sin query params)
+- Respuesta: `400 Bad Request`
 ```json
 {
-  "id": 2,
-  "evaluatorId": "INSTRUCTOR_ID",
-  "evaluatedUserId": "PRACTICANTE_ID",
-  "trunkId": 1,
-  "groupId": 2,
-  "evaluationConfigId": 1,
-  "score": 85,
-  "comments": "Mejorable",
-  "isValid": true,
-  "state": "Validated",
-  "totalErrors": 2,
-  "totalSuccess": 2,
-  "totalMeasurements": 4,
-  "successRate": 0.5,
-  "measurements": [
-    {
-      "timestamp": 1698140000000,
-      "elapsedMs": 10000,
-      "result": "OK",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "28",
-      "force_status": true,
-      "touch_status": "0",
-      "status": false,
-      "message": "touch missing",
-      "is_valid": false    
-      }
-    // ...más mediciones
-  ]
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Se requiere al menos 'groupId' o 'userId' como parámetro de consulta."
 }
 ```
+
 ---
 
 ## Configuraciones de Evaluación
@@ -574,20 +522,23 @@ Notas sobre despliegue y base de datos
 {
   "name": "Config Avanzada",
   "maxErrors": 5,
+  "maxSuccess": 40,
   "maxTime": 60,
   "maxTimeInterval": 120
 }
 ```
+- **Nota:** `maxSuccess` es **obligatorio** - número máximo de aciertos esperados.
 - Respuesta: `200 OK`, configuración creada. Ejemplo:
 ```json
 {
   "id": 1,
   "name": "Config Avanzada",
   "maxErrors": 5,
+  "maxSuccess": 40,
   "maxTime": 60,
   "maxTimeInterval": 120,
   "isDefault": false,
-  "creationDate": "2025-10-24T20:00:00Z"
+  "creationDate": "2025-01-24T20:00:00Z"
 }
 ```
 
@@ -604,18 +555,22 @@ Notas sobre despliegue y base de datos
     "id": 1,
     "name": "Config Default",
     "maxErrors": 10,
+    "maxSuccess": 30,
     "maxTime": 30,
     "maxTimeInterval": 60,
     "isDefault": true,
+    "status": "Active",
     "creationDate": "2024-06-01T12:00:00Z"
   },
   {
     "id": 2,
     "name": "Config Avanzada",
     "maxErrors": 5,
+    "maxSuccess": 40,
     "maxTime": 60,
     "maxTimeInterval": 120,
     "isDefault": false,
+    "status": "Active",
     "creationDate": "2024-06-01T12:05:00Z"
   }
 ]
@@ -632,9 +587,9 @@ Notas sobre despliegue y base de datos
 {
   "name": "Config Editada",
   "maxErrors": 7,
+  "maxSuccess": 35,
   "maxTime": 45,
-  "maxTimeInterval": 90,
-  "sensorIntervals": []
+  "maxTimeInterval": 90
 }
 ```
 - Respuesta: `200 OK`, configuración editada. Ejemplo:
@@ -643,8 +598,11 @@ Notas sobre despliegue y base de datos
   "id": 1,
   "name": "Config Editada",
   "maxErrors": 7,
+  "maxSuccess": 35,
   "maxTime": 45,
-  "maxTimeInterval": 90
+  "maxTimeInterval": 90,
+  "isDefault": false,
+  "status": "Active"
 }
 ```
 
@@ -655,6 +613,29 @@ Notas sobre despliegue y base de datos
 - Método: `DELETE`
 - Headers: `Authorization: Bearer {token}`
 - Respuesta: `204 No Content`.
+
+---
+
+### Restablecer configuración a default
+- URL: `/api/instructor/groups/{groupId}/evaluation-parameters/reset`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Restablece la configuración de evaluación del grupo a la configuración por defecto del sistema. Si no existe una configuración default, la crea con valores predeterminados (`maxErrors: 10`, `maxSuccess: 30`, `maxTime: 30`).
+- Comportamiento:
+  - Busca o crea la configuración `IsDefault = true`
+  - Elimina la relación actual del grupo en `EvaluationConfigGroups`
+  - Crea una nueva relación entre el grupo y la config default
+- Respuesta: `200 OK` con la configuración default. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Default",
+  "maxErrors": 10,
+  "maxSuccess": 30,
+  "maxTime": 30,
+  "isDefault": true
+}
+```
 
 ---
 
@@ -671,7 +652,7 @@ Notas sobre despliegue y base de datos
 ```json
 {
   "trunkId": 1,
-  "comments": "Simulación de prueba con 5 mediciones — algunos fallos incluidos para validar agregados",
+  "comments": "Simulación de prueba con 5 mediciones",
   "measurements": [
     {
       "timestamp": 1698150000000,
@@ -685,58 +666,6 @@ Notas sobre despliegue y base de datos
       "status": true,
       "message": null,
       "is_valid": true
-    },
-    {
-      "timestamp": 1698150012000,
-      "elapsedMs": 12000,
-      "result": "OK",
-      "angle_deg": "0.8",
-      "angle_status": true,
-      "force_value": "31",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698150024000,
-      "elapsedMs": 14000,
-      "result": "TOUCH_FAIL",
-      "angle_deg": "0.5",
-      "angle_status": true,
-      "force_value": "29",
-      "force_status": true,
-      "touch_status": false,
-      "status": false,
-      "message": "touch missed",
-      "is_valid": false
-    },
-    {
-      "timestamp": 1698150036000,
-      "elapsedMs": 16000,
-      "result": "OK",
-      "angle_deg": "0.3",
-      "angle_status": true,
-      "force_value": "33",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698150048000,
-      "elapsedMs": 18000,
-      "result": "FORCE_FAIL",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "12",
-      "force_status": false,
-      "touch_status": true,
-      "status": false,
-      "message": "force below threshold",
-      "is_valid": false
     }
   ],
   "totalDurationMs": 70000,
@@ -748,93 +677,22 @@ Notas sobre despliegue y base de datos
 }
 ```
 
-- Respuesta esperada (ejemplo): `200 OK` con el objeto de la simulación creada incluyendo agregados y la lista de mediciones. Ejemplo de response (resumen):
+- Respuesta esperada: `200 OK` con el objeto de la simulación creada. Ejemplo:
 
 ```json
 {
   "id": 789,
   "practitionerId": "PRACTITIONER_GUID_123",
   "trunkId": 1,
+  "creationDate": "2025-01-24T20:45:00Z",
   "totalDurationMs": 70000,
   "totalErrors": 2,
   "totalSuccess": 3,
   "totalMeasurements": 5,
   "successRate": 0.6,
   "averageErrorsPerMeasurement": 0.4,
-  "isValid": true,
-  "comments": "Simulación de prueba con 5 mediciones — algunos fallos incluidos para validar agregados",
-  "measurements": [
-    {
-      "id": 1001,
-      "timestamp": 1698150000000,
-      "elapsedMs": 10000,
-      "result": "CORRECT",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "32",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "id": 1002,
-      "timestamp": 1698150012000,
-      "elapsedMs": 12000,
-      "result": "CORRECT",
-      "angle_deg": "0.8",
-      "angle_status": true,
-      "force_value": "31",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "id": 1003,
-      "timestamp": 1698150024000,
-      "elapsedMs": 14000,
-      "result": "INCORRECT",
-      "angle_deg": "0.5",
-      "angle_status": true,
-      "force_value": "29",
-      "force_status": true,
-      "touch_status": false,
-      "status": false,
-      "message": "touch missed",
-      "is_valid": false
-    },
-    {
-      "id": 1004,
-      "timestamp": 1698150036000,
-      "elapsedMs": 16000,
-      "result": "CORRECT",
-      "angle_deg": "0.3",
-      "angle_status": true,
-      "force_value": "33",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "id": 1005,
-      "timestamp": 1698150048000,
-      "elapsedMs": 18000,
-      "result": "INCORRECT",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "12",
-      "force_status": false,
-      "touch_status": true,
-      "status": false,
-      "message": "force below threshold",
-      "is_valid": false
-    }
-  ]
+  "comments": "Simulación de prueba con 5 mediciones",
+  "measurements": []
 }
 ```
 
@@ -851,13 +709,13 @@ Notas sobre despliegue y base de datos
     "id": 1,
     "practitionerId": "PRACTICANTE_ID",
     "trunkId": 1,
+    "creationDate": "2025-01-24T19:00:00Z",
     "totalDurationMs": 30000,
     "totalErrors": 1,
     "totalSuccess": 3,
     "totalMeasurements": 4,
     "successRate": 0.75,
     "averageErrorsPerMeasurement": 0.25,
-    "isValid": true,
     "comments": "Simulación completa"
   }
 ]
@@ -877,7 +735,7 @@ Notas sobre despliegue y base de datos
 
 ---
 
-## Nuevos endpoints y cómo probarlos (Staging y Postman)
+## Nuevos endpoints y cómo probarlos
 
 ### Listar practicantes (todos o por grupo)
 - URL: `/api/instructor/practitioners` 
@@ -892,7 +750,10 @@ Notas sobre despliegue y base de datos
   - Headers: `Authorization: Bearer <TOKEN>`
   - Response ejemplo:
   ```json
-  [ { "id": "USER_ID_1", "fullname": "Nombre Uno" }, { "id": "USER_ID_2", "fullname": "Nombre Dos" } ]
+  [
+    { "id": "USER_ID_1", "fullname": "Nombre Uno" }, 
+    { "id": "USER_ID_2", "fullname": "Nombre Dos" }
+  ]
   ```
 
 ### Eliminar evaluación permanentemente (sólo uso manual)
@@ -903,276 +764,9 @@ Notas sobre despliegue y base de datos
 - Ejemplo (Postman):
   - Request DELETE `https://{HOST}/api/instructor/evaluations/123`
   - Headers: `Authorization: Bearer <TOKEN>`
-  - Response: `204 No Content` (si se eliminó)
+  - Response: `204 No Content`
 
-### Cómo probar en Staging (ranura)
-- Si usás Deployment Slots (recomendado):
-  1. En el Portal de Azure -> App Services -> seleccioná tu App Service -> `Deployment slots` -> `Add Slot` -> nombre `staging`.
-  2. Publicá desde Visual Studio a la ranura `staging` (en Publish -> seleccionar la ranura en lugar del sitio production).
-  3. Obtené la URL de la ranura en Portal -> Deployment slots -> seleccioná `staging` -> `Overview` (ej.: `https://heimlich-api-unlam-staging.azurewebsites.net`).
-  4. En Postman usá esa URL como `{HOST}` para probar: `https://heimlich-api-unlam-staging.azurewebsites.net/api/instructor/practitioners` o `.../evaluations/{id}`.
-  5. Validá que los endpoints funcionen en staging (GET, DELETE, etc.).
-  6. Si todo está OK, hacé `Swap` (staging ? production) desde Portal -> Deployment slots.
-
-Notas sobre qué implica publicar a Staging vs Production
-- Publicar a `staging` reinicia solo la ranura `staging`, no la ranura `production`.
-- Hacer `swap` intercambia contenido y, por defecto, intercambia también las configuraciones NO marcadas como "slot setting". Marca `DefaultConnection`, `Jwt__Key`, `APPLICATIONINSIGHTS_CONNECTION_STRING` y secretos como `Slot setting` para evitar sobrescribir valores de producción.
-
-¿Publicar desde Visual Studio directamente a Production reinicia App Service y afecta la DB?
-- Sí: publicar a production reinicia la aplicación (arranque del proceso). Esto no modifica la estructura de la base de datos a menos que:
-  - La aplicación ejecute migraciones automáticas en arranque (flag `ApplyMigrationsOnStartup=true` en App Service Configuration), o
-  - El pipeline/publish incluya un paso explícito `dotnet ef database update`.
-- En la configuración actual (por defecto) las migraciones no se ejecutan a menos que actives el flag; por tanto, publicar código no debería cambiar el schema de la DB.
-- Aun así, la app se reinicia y puede haber un breve downtime (aceptado en tu horario). Recomiendo usar `staging` y `swap` para despliegues más seguros.
-
-### Ejemplo rápido de Postman (pasos)
-1. Login y obtener token:
-   - POST `https://{HOST}/api/auth/login` Body JSON: `{ "userName": "tuUsuario", "password": "tuPass" }`
-   - Copiar `token` de la respuesta.
-2. Probar listar practicantes en staging:
-   - GET `https://{STAGING_HOST}/api/instructor/practitioners?groupId=5`
-   - Header: `Authorization: Bearer <TOKEN>`
-3. Probar borrar evaluación (solo admin/instructor):
-   - DELETE `https://{STAGING_HOST}/api/instructor/evaluations/123`
-   - Header: `Authorization: Bearer <TOKEN>`
-
----
-
-Contacto / pruebas
-- Si el equipo mobile necesita un conjunto de ejemplos JSON para crear evaluaciones o simulaciones, en el directorio `Heimlich.Api/Examples` se incluyen varios archivos (`create-evaluation-with-aggregates.json`, `create-evaluation-no-aggregates.json`, `cancel-evaluation.json`, etc.).
-
----
-
-Última actualización: (automático) documentación actualizada para pruebas desde Postman y React Native.
-
----
-
-# Ejemplos Postman (nuevos)
-
----
-
-### Ejemplo completo: Crear evaluación (10 mediciones, cálculo de agregados)
-- URL: `/api/instructor/evaluations/create`
-- Método: `POST`
-- Headers:
-  - `Content-Type: application/json`
-  - `Authorization: Bearer {token}`
-- Body (raw JSON) — este ejemplo contiene 10 mediciones. Regla de negocio aplicada en ejemplo: cada medición que tenga al menos un campo de estado `false` se considera error; cada error resta 10 puntos del score inicial (100):
-
-```json
-{
-  "evaluatedUserId": "PRACTICANTE_GUID_123",
-  "trunkId": 1,
-  "groupId": 10,
-  "comments": "Evaluación inicial - prueba Postman con 10 mediciones. Reglas: cada medición con al menos un status false cuenta como error; cada error resta 10 puntos del score inicial 100.",
-  "score": 70,
-  "measurements": [
-    {
-      "timestamp": 1698140000000,
-      "elapsedMs": 10000,
-      "result": "OK",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "32",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140010000,
-      "elapsedMs": 11000,
-      "result": "OK",
-      "angle_deg": "1.2",
-      "angle_status": true,
-      "force_value": "31",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140020000,
-      "elapsedMs": 12000,
-      "result": "OUT_OF_RANGE",
-      "angle_deg": "5.0",
-      "angle_status": false,
-      "force_value": "28",
-      "force_status": true,
-      "touch_status": true,
-      "status": false,
-      "message": "angle out of range",
-      "is_valid": false
-    },
-    {
-      "timestamp": 1698140030000,
-      "elapsedMs": 13000,
-      "result": "OK",
-      "angle_deg": "0.5",
-      "angle_status": true,
-      "force_value": "30",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140040000,
-      "elapsedMs": 14000,
-      "result": "OK",
-      "angle_deg": "0.8",
-      "angle_status": true,
-      "force_value": "33",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140050000,
-      "elapsedMs": 15000,
-      "result": "TOUCH_FAIL",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "29",
-      "force_status": true,
-      "touch_status": false,
-      "status": false,
-      "message": "touch sensor missed",
-      "is_valid": false
-    },
-    {
-      "timestamp": 1698140060000,
-      "elapsedMs": 16000,
-      "result": "OK",
-      "angle_deg": "0.2",
-      "angle_status": true,
-      "force_value": "34",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140070000,
-      "elapsedMs": 17000,
-      "result": "OK",
-      "angle_deg": "0.6",
-      "angle_status": true,
-      "force_value": "31",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    },
-    {
-      "timestamp": 1698140080000,
-      "elapsedMs": 18000,
-      "result": "FORCE_FAIL",
-      "angle_deg": "0.0",
-      "angle_status": true,
-      "force_value": "15",
-      "force_status": false,
-      "touch_status": true,
-      "status": false,
-      "message": "force below threshold",
-      "is_valid": false
-    },
-    {
-      "timestamp": 1698140090000,
-      "elapsedMs": 19000,
-      "result": "OK",
-      "angle_deg": "0.4",
-      "angle_status": true,
-      "force_value": "32",
-      "force_status": true,
-      "touch_status": true,
-      "status": true,
-      "message": null,
-      "is_valid": true
-    }
-  ],
-  "totalDurationMs": 145000,
-  "totalMeasurements": 10,
-  "totalSuccess": 7,
-  "totalErrors": 3,
-  "successRate": 0.7,
-  "averageErrorsPerMeasurement": 0.3
-}
-```
-
-- Respuesta esperada (ejemplo): `200 OK` con el objeto de la evaluación creada incluyendo agregados y la lista de mediciones. Ejemplo de response (resumen):
-```json
-{
-  "id": 456,
-  "evaluatorId": "INSTRUCTOR_GUID_1",
-  "evaluatedUserId": "PRACTICANTE_GUID_123",
-  "trunkId": 1,
-  "groupId": 10,
-  "evaluationConfigId": 2,
-  "score": 70,
-  "comments": "Evaluación inicial - prueba Postman con 10 mediciones...",
-  "is_valid": null,
-  "state": "Active",
-  "totalErrors": 3,
-  "totalSuccess": 7,
-  "totalMeasurements": 10,
-  "successRate": 0.7,
-  "totalDurationMs": 145000,
-  "averageErrorsPerMeasurement": 0.3,
-  "measurements": [ /* objetos de medición con los mismos campos enviados y el id/time asignado */ ]
-}
-```
-
----
-
-### Ejemplo completo: Validar evaluación
-- URL: `/api/instructor/evaluations/{evaluationId}/validate`
-- Método: `POST`
-- Headers:
-  - `Content-Type: application/json`
-  - `Authorization: Bearer {token}`
-- Body (raw JSON):
-
-```json
-{
-  "score": 92,
-  "is_valid": true,
-  "comments": "Validación final: cumple con los requisitos",
-  "signature": "firmaInstructorEjemploBase64==",
-  "evaluationConfigId": 1
-}
-```
-
-- Respuesta esperada: `200 OK` con mensaje o el objeto evaluado actualizado. Ejemplo:
-
-```json
-{
-  "message": "Evaluation validated",
-  "evaluation": {
-    "id": 456,
-    "score": 92,
-    "is_valid": true,
-    "validatedAt": "2025-10-24T21:30:00Z",
-    "signature": "firmaInstructorEjemploBase64==",
-    "totalErrors": 3,
-    "totalSuccess": 7,
-    "totalMeasurements": 10,
-    "successRate": 0.7
-  }
-}
-
-```
-
----
-
-### Eliminar simulación (solo uso manual)
+### Eliminar simulación permanentemente (sólo uso manual)
 - URL: `/api/instructor/simulations/{id}`
 - Método: `DELETE`
 - Headers: `Authorization: Bearer {token}`
@@ -1180,51 +774,47 @@ Contacto / pruebas
 - Ejemplo (Postman):
   - Request DELETE `https://{HOST}/api/instructor/simulations/789`
   - Headers: `Authorization: Bearer <TOKEN>`
-  - Response: `204 No Content`.
+  - Response: `204 No Content`
 
 ---
 
-(Se agregó `creationDate` a los ejemplos de response para evaluaciones y simulaciones. A continuación se muestran fragmentos actualizados con `creationDate`.)
+## Cambios recientes en la API (Enero 2025)
 
-### Ejemplo de response (evaluación con `creationDate`)
-```json
-{
-  "id": 456,
-  "evaluatorId": "INSTRUCTOR_GUID_1",
-  "evaluatedUserId": "PRACTICANTE_GUID_123",
-  "trunkId": 1,
-  "groupId": 10,
-  "evaluationConfigId": 2,
-  "score": 70,
-  "comments": "Evaluación inicial - prueba Postman con 10 mediciones...",
-  "is_valid": null,
-  "state": "Active",
-  "creationDate": "2025-10-24T21:00:00Z",
-  "validatedAt": null,
-  "totalErrors": 3,
-  "totalSuccess": 7,
-  "totalMeasurements": 10,
-  "successRate": 0.7,
-  "totalDurationMs": 145000,
-  "averageErrorsPerMeasurement": 0.3,
-  "measurements": [ /* objetos de medición con los mismos campos enviados y el id/time asignado */ ]
-}
-```
+### 1. Campo `IsValid` eliminado de Evaluaciones
+- **Qué cambió:** El campo `isValid` fue eliminado de la entidad `Evaluation` y de todos los DTOs relacionados.
+- **Endpoints afectados:**
+  - `POST /api/instructor/evaluations/create` - response ya no incluye `isValid`
+  - `POST /api/instructor/evaluations/{id}/validate` - body ya no requiere/acepta `is_valid`
+  - `GET /api/instructor/evaluations` - response ya no incluye `isValid`
+  - `GET /api/instructor/evaluations/by-group-practitioner` - response ya no incluye `isValid`
+- **Acción requerida:** Clientes mobile deben remover referencias a `isValid` en evaluaciones.
 
-### Ejemplo de response (simulación con `creationDate`)
-```json
-{
-  "id": 789,
-  "practitionerId": "PRACTITIONER_GUID_123",
-  "trunkId": 1,
-  "creationDate": "2025-10-24T20:45:00Z",
-  "totalDurationMs": 70000,
-  "totalErrors": 2,
-  "totalSuccess": 3,
-  "totalMeasurements": 5,
-  "successRate": 0.6,
-  "averageErrorsPerMeasurement": 0.4,
-  "isValid": true,
-  "comments": "Simulación de prueba con 5 mediciones — algunos fallos incluidos para validar agregados",
-  "measurements": [ /* ... */ ]
-}
+### 2. Campo `MaxSuccess` agregado a EvaluationConfig
+- **Qué cambió:** Nuevo campo obligatorio `maxSuccess` en configuraciones de evaluación.
+- **Endpoints afectados:**
+  - `POST /api/instructor/evaluation-configs` - body requiere `maxSuccess`
+  - `PUT /api/instructor/evaluation-configs/{id}` - body requiere `maxSuccess`
+  - `GET /api/instructor/evaluation-configs` - response incluye `maxSuccess`
+  - `POST /api/instructor/groups/{groupId}/evaluation-parameters/reset` - response incluye `maxSuccess`
+- **Valor por defecto:** 30 aciertos
+- **Acción requerida:** Clientes mobile deben incluir `maxSuccess` al crear/editar configs.
+
+### 3. Campo `EvaluationDate` agregado a Groups
+- **Qué cambió:** Nuevo campo obligatorio `evaluationDate` en grupos (fecha programada de evaluación).
+- **Endpoints afectados:**
+  - `POST /api/instructor/groups` - body requiere `evaluationDate`
+  - `PUT /api/instructor/groups/{id}` - body requiere `evaluationDate`
+  - `GET /api/instructor/groups/owned` - response incluye `evaluationDate`
+- **Acción requerida:** Clientes mobile deben permitir al usuario seleccionar `evaluationDate` al crear/editar grupos.
+
+### 4. Campo `EvaluatedUserFullName` agregado a Evaluaciones
+- **Qué cambió:** Las respuestas de evaluaciones ahora incluyen el nombre completo del practicante evaluado.
+- **Endpoints afectados:**
+  - `GET /api/instructor/evaluations` - response incluye `evaluatedUserFullName`
+  - `GET /api/instructor/evaluations/by-group-practitioner` - response incluye `evaluatedUserFullName`
+  - `POST /api/instructor/evaluations/{id}/validate` - response incluye `evaluatedUserFullName`
+- **Beneficio:** No es necesario hacer llamadas adicionales para obtener el nombre del practicante.
+
+---
+
+Última actualización: Enero 2025 - documentación actualizada con cambios de schema de base de datos.

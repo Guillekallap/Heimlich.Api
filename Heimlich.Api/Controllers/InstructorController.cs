@@ -35,7 +35,7 @@ namespace Heimlich.Api.Controllers
         [HttpPost("groups")]
         public async Task<IActionResult> CreateGroup([FromBody] CreateGroupDto dto)
         {
-            var command = new CreateGroupCommand(dto.Name, dto.Description, dto.PractitionerIds, dto.EvaluationConfigId);
+            var command = new CreateGroupCommand(dto.Name, dto.Description, dto.EvaluationDate, dto.PractitionerIds, dto.EvaluationConfigId);
             var group = await _mediator.Send(command);
             return Ok(group);
         }
@@ -63,7 +63,7 @@ namespace Heimlich.Api.Controllers
         [HttpPut("groups/{groupId}")]
         public async Task<IActionResult> EditGroup(int groupId, [FromBody] EditGroupDto dto)
         {
-            var command = new EditGroupCommand(groupId, dto.Name, dto.Description, dto.PractitionerIds);
+            var command = new EditGroupCommand(groupId, dto.Name, dto.Description, dto.EvaluationDate, dto.PractitionerIds);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -120,7 +120,7 @@ namespace Heimlich.Api.Controllers
         {
             var instructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(instructorId)) return Unauthorized();
-            var command = new ValidateEvaluationExtendedCommand(evaluationId, instructorId, dto.Score, dto.IsValid, dto.Comments, dto.Signature, dto.EvaluationConfigId);
+            var command = new ValidateEvaluationExtendedCommand(evaluationId, instructorId, dto.Score, dto.Comments, dto.Signature, dto.EvaluationConfigId);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -194,7 +194,7 @@ namespace Heimlich.Api.Controllers
         [HttpPut("groups/{groupId}/evaluation-parameters")]
         public async Task<IActionResult> UpdateEvaluationParameters(int groupId, [FromBody] EvaluationParametersDto dto)
         {
-            var command = new UpsertEvaluationConfigCommand(groupId, dto.MaxErrors, dto.MaxTime, dto.Name, false);
+            var command = new UpsertEvaluationConfigCommand(groupId, dto.MaxErrors, dto.MaxSuccess, dto.MaxTime, dto.Name, false);
             var result = await _mediator.Send(command);
             return Ok(result);
         }
@@ -231,6 +231,7 @@ namespace Heimlich.Api.Controllers
             {
                 Name = dto.Name,
                 MaxErrors = dto.MaxErrors,
+                MaxSuccess = dto.MaxSuccess,
                 MaxTime = dto.MaxTime,
                 MaxTimeInterval = dto.MaxTimeInterval,
                 IsDefault = false
@@ -257,6 +258,7 @@ namespace Heimlich.Api.Controllers
             if (config.IsDefault) return BadRequest("No se puede modificar la configuración default");
             config.Name = dto.Name;
             config.MaxErrors = dto.MaxErrors;
+            config.MaxSuccess = dto.MaxSuccess;
             config.MaxTime = dto.MaxTime;
             config.MaxTimeInterval = dto.MaxTimeInterval;
             await _context.SaveChangesAsync();

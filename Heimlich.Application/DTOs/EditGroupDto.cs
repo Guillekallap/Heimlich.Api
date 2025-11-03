@@ -10,6 +10,9 @@ namespace Heimlich.Application.DTOs
         [JsonPropertyName("description")]
         public string Description { get; set; }
 
+        [JsonPropertyName("evaluationDate")]
+        public DateTime EvaluationDate { get; set; }
+
         [JsonPropertyName("practitionerIds")]
         public List<string> PractitionerIds { get; set; }
     }

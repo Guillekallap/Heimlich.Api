@@ -14,6 +14,9 @@ namespace Heimlich.Application.DTOs
         [JsonPropertyName("evaluatedUserId")]
         public string? EvaluatedUserId { get; set; }
 
+        [JsonPropertyName("evaluatedUserFullName")]
+        public string? EvaluatedUserFullName { get; set; }
+
         [JsonPropertyName("trunkId")]
         public int? TrunkId { get; set; }
 
@@ -28,9 +31,6 @@ namespace Heimlich.Application.DTOs
 
         [JsonPropertyName("comments")]
         public string? Comments { get; set; }
-
-        [JsonPropertyName("is_valid")]
-        public bool? IsValid { get; set; }
 
         [JsonPropertyName("state")]
         public SessionStateEnum State { get; set; }
@@ -63,7 +63,7 @@ namespace Heimlich.Application.DTOs
         public IList<EvaluationMeasurementDto> Measurements { get; set; } = new List<EvaluationMeasurementDto>();
     }
 
-    // Align with SimulationMeasurementDto
+    // Align with SimulationMeasurementDto - unified property names only
     public class EvaluationMeasurementDto
     {
         // optional measurement id

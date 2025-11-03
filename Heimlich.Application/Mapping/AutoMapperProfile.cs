@@ -51,6 +51,7 @@ namespace Heimlich.Application.Mapping
 
             // Evaluation mapping (incluir campos agregados)
             CreateMap<Evaluation, EvaluationDto>()
+                .ForMember(dest => dest.EvaluatedUserFullName, opt => opt.MapFrom(src => src.EvaluatedUser != null ? src.EvaluatedUser.Fullname : null))
                 .ForMember(dest => dest.Measurements, opt => opt.MapFrom(src => src.Measurements.OrderBy(m => m.ElapsedMs)))
                 .ForMember(dest => dest.CreationDate, opt => opt.MapFrom(src => src.CreationDate))
                 .ForMember(dest => dest.ValidatedAt, opt => opt.MapFrom(src => src.ValidatedAt));

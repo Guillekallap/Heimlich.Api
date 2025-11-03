@@ -8,6 +8,7 @@ namespace Heimlich.Domain.Entities
         public int? GroupId { get; set; } // grupo opcional (config reutilizable)
         public Group? Group { get; set; }
         public int MaxErrors { get; set; }
+        public int MaxSuccess { get; set; }
         public int MaxTime { get; set; }
         public int MaxTimeInterval { get; set; } // Lapso en segundos entre evaluaciones automáticas
         public string Name { get; set; } // Identificación desde mobile (único a nivel sistema)

@@ -21,7 +21,10 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
         public async Task<List<EvaluationDto>> Handle(GetEvaluationsQuery request, CancellationToken cancellationToken)
         {
-            var query = _context.Evaluations.Include(e => e.Measurements).AsQueryable();
+            var query = _context.Evaluations
+                .Include(e => e.Measurements)
+                .Include(e => e.EvaluatedUser)
+                .AsQueryable();
 
             if (request.GroupId.HasValue)
             {
@@ -34,7 +37,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
 
             var evaluations = await query.ToListAsync(cancellationToken);
 
-            // Map using AutoMapper (measurements are already included so Ids will be available)
+            // Map using AutoMapper (measurements and EvaluatedUser are already included so FullName will be available)
             var result = _mapper.Map<List<EvaluationDto>>(evaluations);
 
             return result;

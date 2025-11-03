@@ -4,19 +4,27 @@ using Heimlich.Domain.Enums;
 using Heimlich.Infrastructure.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 namespace Heimlich.Application.Features.Evaluations.Handlers
 {
     public class ValidateEvaluationExtendedHandler : IRequestHandler<ValidateEvaluationExtendedCommand, EvaluationDto>
     {
         private readonly HeimlichDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ValidateEvaluationExtendedHandler(HeimlichDbContext context)
-        { _context = context; }
+        public ValidateEvaluationExtendedHandler(HeimlichDbContext context, IMapper mapper)
+        { 
+            _context = context;
+            _mapper = mapper;
+        }
 
         public async Task<EvaluationDto> Handle(ValidateEvaluationExtendedCommand request, CancellationToken cancellationToken)
         {
-            var evaluation = await _context.Evaluations.FirstOrDefaultAsync(e => e.Id == request.EvaluationId, cancellationToken);
+            var evaluation = await _context.Evaluations
+                .Include(e => e.Measurements)
+                .Include(e => e.EvaluatedUser)
+                .FirstOrDefaultAsync(e => e.Id == request.EvaluationId, cancellationToken);
             if (evaluation == null) throw new KeyNotFoundException("Evaluación no encontrada");
             if (evaluation.EvaluatedUserId == null)
                 throw new InvalidOperationException("No se puede validar una evaluación sin practicante asignado.");
@@ -28,26 +36,14 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             if (config == null)
                 throw new KeyNotFoundException("Configuración de evaluación no encontrada.");
             evaluation.Score = request.Score;
-            evaluation.IsValid = request.IsValid;
             evaluation.Comments = request.Comments;
             evaluation.Signature = request.Signature;
             evaluation.EvaluationConfigId = config.Id;
             evaluation.State = SessionStateEnum.Validated;
             evaluation.ValidatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
-            return new EvaluationDto
-            {
-                Id = evaluation.Id,
-                EvaluatorId = evaluation.EvaluatorId,
-                EvaluatedUserId = evaluation.EvaluatedUserId,
-                TrunkId = evaluation.TrunkId,
-                GroupId = evaluation.GroupId,
-                EvaluationConfigId = evaluation.EvaluationConfigId,
-                Score = evaluation.Score,
-                Comments = evaluation.Comments,
-                IsValid = evaluation.IsValid,
-                State = evaluation.State
-            };
+            
+            return _mapper.Map<EvaluationDto>(evaluation);
         }
     }
 }

@@ -87,9 +87,6 @@ namespace Heimlich.Application.DTOs
         [JsonPropertyName("score")]
         public double Score { get; set; }
 
-        [JsonPropertyName("is_valid")]
-        public bool IsValid { get; set; }
-
         [JsonPropertyName("comments")]
         public string? Comments { get; set; }
 

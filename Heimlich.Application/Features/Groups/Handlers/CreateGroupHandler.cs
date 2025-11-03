@@ -31,7 +31,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
             var defaultConfig = await _context.EvaluationConfigs.FirstOrDefaultAsync(c => c.IsDefault, cancellationToken);
             if (defaultConfig == null)
             {
-                defaultConfig = new EvaluationConfig { Name = "Default", MaxErrors = 10, MaxTime = 30, IsDefault = true };
+                defaultConfig = new EvaluationConfig { Name = "Default", MaxErrors = 10, MaxSuccess = 30, MaxTime = 30, IsDefault = true };
                 _context.EvaluationConfigs.Add(defaultConfig);
                 await _context.SaveChangesAsync(cancellationToken);
             }
@@ -49,6 +49,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 Name = request.Name.Trim(),
                 Description = (request.Description ?? string.Empty).Trim(),
                 CreationDate = DateTime.UtcNow,
+                EvaluationDate = request.EvaluationDate,
                 Status = GroupStatusEnum.Active,
                 OwnerInstructorId = ownerId!
             };
@@ -82,6 +83,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 Name = entity.Name,
                 Description = entity.Description,
                 CreationDate = entity.CreationDate,
+                EvaluationDate = entity.EvaluationDate,
                 Status = entity.Status.ToString(),
                 OwnerInstructorId = ownerId,
                 OwnerInstructorName = ownerName,

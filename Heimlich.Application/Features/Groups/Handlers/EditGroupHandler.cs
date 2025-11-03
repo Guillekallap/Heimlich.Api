@@ -19,6 +19,8 @@ namespace Heimlich.Application.Features.Groups.Handlers
             if (group == null) throw new InvalidOperationException("Grupo no encontrado");
             group.Name = request.Name ?? group.Name;
             group.Description = request.Description ?? group.Description;
+            group.EvaluationDate = request.EvaluationDate;
+            
             // Actualizar practicantes: eliminar los que no estén y agregar nuevos
             var newSet = new HashSet<string>(request.PractitionerIds ?? new List<string>());
             var existingSet = new HashSet<string>(group.UserGroups.Select(ug => ug.UserId));
@@ -39,6 +41,7 @@ namespace Heimlich.Application.Features.Groups.Handlers
                 Name = group.Name,
                 Description = group.Description,
                 CreationDate = group.CreationDate,
+                EvaluationDate = group.EvaluationDate,
                 Status = group.Status.ToString(),
                 PractitionerIds = group.UserGroups.Select(ug => ug.UserId).ToList()
             };

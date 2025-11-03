@@ -24,6 +24,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
         {
             var evaluations = await _context.Evaluations
                 .Include(e => e.Measurements)
+                .Include(e => e.EvaluatedUser)
                 .Where(e => e.EvaluatorId == request.InstructorId)
                 .ToListAsync(cancellationToken);
 

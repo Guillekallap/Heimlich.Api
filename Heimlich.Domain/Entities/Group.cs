@@ -8,6 +8,7 @@ namespace Heimlich.Domain.Entities
         public string Name { get; set; }
         public string Description { get; set; }
         public DateTime CreationDate { get; set; }
+        public DateTime EvaluationDate { get; set; } // Fecha de evaluación ingresada por usuario mobile
         public GroupStatusEnum Status { get; set; } = GroupStatusEnum.Active;
         public string OwnerInstructorId { get; set; }
         public User? OwnerInstructor { get; set; }

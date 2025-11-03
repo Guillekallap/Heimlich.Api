@@ -21,7 +21,8 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 defaultConfig = new EvaluationConfig
                 {
                     Name = "Default",
-                    MaxErrors = 10,
+                    MaxErrors = 15,
+                    MaxSuccess = 10,
                     MaxTime = 30,
                     IsDefault = true,
                     GroupId = null
@@ -47,6 +48,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                 Id = defaultConfig.Id,
                 Name = defaultConfig.Name,
                 MaxErrors = defaultConfig.MaxErrors,
+                MaxSuccess = defaultConfig.MaxSuccess,
                 MaxTime = defaultConfig.MaxTime,
                 IsDefault = defaultConfig.IsDefault
             };

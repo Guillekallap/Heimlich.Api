@@ -38,6 +38,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
             {
                 Name = request.Name,
                 MaxErrors = request.MaxErrors,
+                MaxSuccess = request.MaxSuccess,
                 MaxTime = request.MaxTime,
                 IsDefault = request.IsDefault,
                 GroupId = null

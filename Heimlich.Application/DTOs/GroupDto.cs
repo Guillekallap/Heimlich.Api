@@ -16,6 +16,9 @@ namespace Heimlich.Application.DTOs
         [JsonPropertyName("creationDate")]
         public DateTime CreationDate { get; set; }
 
+        [JsonPropertyName("evaluationDate")]
+        public DateTime EvaluationDate { get; set; }
+
         [JsonPropertyName("status")]
         public string Status { get; set; }
 
