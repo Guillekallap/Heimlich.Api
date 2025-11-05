@@ -1,4 +1,5 @@
 ﻿using Heimlich.Application.DTOs;
+using Heimlich.Application.Features.Evaluations.Queries;
 using Heimlich.Application.Features.Groups.Queries;
 using Heimlich.Application.Features.Simulations.Commands;
 using Heimlich.Application.Features.Simulations.Queries;
@@ -59,12 +60,16 @@ namespace Heimlich.Api.Controllers
             return Ok(list);
         }
 
-        [HttpGet("groups/assigned")]
-        public async Task<IActionResult> GetAssignedGroups([FromQuery] string userId)
+        [HttpGet("evaluations/by-group")]
+        public async Task<IActionResult> GetEvaluationsByGroup()
         {
-            var query = new GetAssignedGroupQuery(userId);
-            var group = await _mediator.Send(query);
-            return Ok(group);
+            var practitionerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(practitionerId))
+                return Unauthorized();
+
+            var query = new GetPractitionerEvaluationsByGroupQuery(practitionerId);
+            var result = await _mediator.Send(query);
+            return Ok(result);
         }
     }
 }

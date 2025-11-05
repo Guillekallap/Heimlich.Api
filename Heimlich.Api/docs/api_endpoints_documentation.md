@@ -859,3 +859,2595 @@ Casos de uso y ejemplos:
 ---
 
 Última actualización: Enero 2025 - documentación actualizada con cambios de schema de base de datos.
+
+---
+
+# Heimlich API - Endpoint Documentation
+
+Base URL (production)
+- https://heimlich-api-unlam.azurewebsites.net
+
+Common headers
+- `Content-Type: application/json`
+- `Authorization: Bearer {token}` (for protected endpoints)
+
+JWT Token
+- The login endpoint returns a JWT in the body. The field may be called `token` or `access_token` depending on the client version. Use that value in the `Authorization: Bearer {token}` header.
+- Configuration note: the JWT key (`Jwt__Key`) and `Jwt__Issuer` / `Jwt__Audience` values are configured in App Service -> Configuration (or in Key Vault) in production. Ensure that the mobile app uses the same `Audience` as configured in the API.
+
+How to quickly test
+- Postman: POST to the login endpoint, copy token and use in Authorization -> Bearer Token.
+- curl example:
+  - Get token:
+    `curl -X POST -H "Content-Type: application/json" -d '{"userName":"yourUser","password":"yourPass"}' https://heimlich-api-unlam.azurewebsites.net/api/auth/login`
+  - Call protected endpoint:
+    `curl -H "Authorization: Bearer <TOKEN>" https://heimlich-api-unlam.azurewebsites.net/api/instructor/evaluations`
+- React Native (fetch + AsyncStorage):
+  - Save token after login and add `Authorization` in subsequent fetch requests. (See examples at the end of the document.)
+
+Note on CORS
+- Native applications (React Native Android/iOS) do not require CORS configuration.
+- Web/SPA applications must have their origin added to the backend CORS policy. In production, the expected origin is `https://heimlich-app-mobile.azurestaticapps.net`.
+- If you need another origin, request to add it in App Service -> Configuration or modify the CORS policy in `Program.cs`.
+
+Swagger
+- Swagger is disabled by default in production (`EnableSwagger=false`). To see the documentation in development, enable `EnableSwagger=true` in configuration or check locally with `dotnet run`.
+
+Application Insights
+- Application Insights is enabled in production and the connection string is found in App Service -> Configuration as `APPLICATIONINSIGHTS_CONNECTION_STRING`.
+- You can use `Live Metrics` to see requests in real time and `Failures` to review exceptions.
+
+Authentication
+- All endpoints require JWT except `/api/auth/register` and `/api/auth/login`.
+- Make sure to use the configured `Issuer` and `Audience` in the app to validate tokens.
+
+Deployment and database notes
+- In production, the application uses the `DefaultConnection` string configured in App Service -> Connection strings. In this project, we have configured the application to support authentication using Managed Identity (Azure AD) using `Authentication=Active Directory Default` in the connection string.
+- For the API to create tables through migrations on startup, the App Service's Managed Identity must exist and have permissions on the database (e.g. `db_owner` temporary or `db_ddladmin`/`db_datareader`/`db_datawriter` roles).
+- For security, automatic migration execution is disabled by default; it can be temporarily activated with `ApplyMigrationsOnStartup=true` in App Service -> Configuration.
+
+---
+
+# Endpoints
+
+## Authentication
+
+### Register user
+- URL: `/api/auth/register`
+- Method: `POST`
+- Body:
+```json
+{
+  "userName": "newUser",
+  "fullName": "Name Surname",
+  "email": "email@domain.com",
+  "password": "YourPassword123",
+  "role": 2
+}
+```
+- Response: `201 Created` (user data). Example response:
+```json
+{
+  "id": "USER-GUID",
+  "userName": "newUser",
+  "email": "email@domain.com",
+  "fullName": "Name Surname",
+  "roles": [2]
+}
+```
+
+---
+
+### Login
+- URL: `/api/auth/login`
+- Method: `POST`
+- Body:
+```json
+{
+  "userName": "newUser",
+  "password": "YourPassword123"
+}
+```
+- Response: `200 OK` with JWT token in the body. Example:
+```json
+{
+  "token": "eyJhbGci...",
+  "expiresIn": 3600,
+  "user": { "id": "USER-GUID", "userName": "newUser" }
+}
+```
+
+---
+
+### Logout
+- URL: `/api/auth/logout`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body: empty
+- Response: `200 OK`. Example:
+```json
+{ "message": "Logout successful" }
+```
+
+---
+
+### User profile
+- URL: `/api/auth/profile?userId={id}`  
+- Method: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`, user data. Example:
+```json
+{
+  "id": "USER-GUID",
+  "userName": "newUser",
+  "fullName": "Name Surname",
+  "email": "email@domain.com",
+  "roles": [2]
+}
+```
+
+---
+
+### Change password
+- URL: `/api/auth/change-password`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "currentPassword": "YourPassword123",
+  "newPassword": "NewPassword456"
+}
+```
+- Response: `200 OK`. Example:
+```json
+{ "message": "Password changed successfully" }
+```
+
+---
+
+## Groups (Instructor)
+
+### Create group
+- URL: `/api/instructor/groups`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Group A",
+  "description": "Initial training",
+  "evaluationDate": "2025-02-15T10:00:00Z",
+  "practitionerIds": ["USER_ID_1", "USER_ID_2"],
+  "evaluationConfigId": 1
+}
+```
+- **Note:** `evaluationDate` is **mandatory** - date when the group's evaluation will be scheduled.
+- Response: `200 OK`, data of the created group. Example:
+```json
+{
+  "id": 123,
+  "name": "Group A",
+  "description": "Initial training",
+  "creationDate": "2025-01-24T20:00:00Z",
+  "evaluationDate": "2025-02-15T10:00:00Z",
+  "status": "Active",
+  "ownerInstructorId": "INSTRUCTOR_ID",
+  "ownerInstructorName": "Juan Pérez",
+  "practitionerIds": ["USER_ID_1", "USER_ID_2"]
+}
+```
+
+---
+
+### Get instructor's groups
+- URL: `/api/instructor/groups/owned`
+- Method: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`. Example:
+```json
+[
+  {
+    "id": 123,
+    "name": "Group A",
+    "description": "Initial training",
+    "creationDate": "2025-01-24T20:00:00Z",
+    "evaluationDate": "2025-02-15T10:00:00Z",
+    "status": "Active",
+    "ownerInstructorId": "INSTRUCTOR_ID",
+    "ownerInstructorName": "Juan Pérez",
+    "practitionerIds": ["USER_ID_1", "USER_ID_2"]
+  }
+]
+```
+
+---
+
+### Edit group
+- URL: `/api/instructor/groups/{groupId}`
+- Method: `PUT`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Edited Group A",
+  "description": "New description",
+  "evaluationDate": "2025-02-20T14:00:00Z",
+  "practitionerIds": ["USER_ID_1", "USER_ID_3"]
+}
+```
+- **Note:** `evaluationDate` is **mandatory**.
+- Response: `200 OK`. Example:
+```json
+{
+  "id": 123,
+  "name": "Edited Group A",
+  "description": "New description",
+  "creationDate": "2025-01-24T20:00:00Z",
+  "evaluationDate": "2025-02-20T14:00:00Z",
+  "status": "Active",
+  "ownerInstructorId": "INSTRUCTOR_ID",
+  "ownerInstructorName": "Juan Pérez",
+  "practitionerIds": ["USER_ID_1", "USER_ID_3"]
+}
+```
+
+---
+
+### Delete group
+- URL: `/api/instructor/groups/{id}`
+- Method: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Response: `204 No Content`.
+
+
+---
+
+### Assign evaluation configuration to group
+- URL: `/api/instructor/groups/{groupId}/config/{configId}`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`, configuration linked. Example:
+```json
+{ "message": "Configuration assigned" }
+```
+
+---
+
+### View groups assigned to practitioner
+- URL: `/api/instructor/groups/assigned?userId={userId}`
+- Method: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`, data of the group assigned to the practitioner. Example:
+```json
+[
+  {
+    "id": 123,
+    "name": "Group A",
+    "evaluationDate": "2025-02-15T10:00:00Z",
+    "assignedTo": "PRACTICANTE_ID"
+  }
+]
+```
+
+---
+
+## Evaluaciones (Instructor)
+
+### Crear evaluación
+- URL: `/api/instructor/evaluations/create`
+- Método: `POST`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {token}`
+- Body (completo, ejemplo con 10 mediciones y agregados):
+```json
+{
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "trunkId": 1,
+  "groupId": 10,
+  "comments": "Evaluación inicial - prueba Postman con 10 mediciones.",
+  "score": 70,
+  "measurements": [
+    {
+      "timestamp": 1698140000000,
+      "elapsedMs": 10000,
+      "result": "OK",
+      "angle_deg": "0.0",
+      "angle_status": true,
+      "force_value": "32",
+      "force_status": true,
+      "touch_status": true,
+      "status": true,
+      "message": null,
+      "is_valid": true
+    }
+  ],
+  "totalDurationMs": 145000,
+  "totalMeasurements": 10,
+  "totalSuccess": 7,
+  "totalErrors": 3,
+  "successRate": 0.7,
+  "averageErrorsPerMeasurement": 0.3
+}
+```
+- Respuesta esperada (ejemplo): `200 OK` con el objeto de la evaluación creada. Ejemplo de response:
+```json
+{
+  "id": 456,
+  "evaluatorId": "INSTRUCTOR_GUID_1",
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "evaluatedUserFullName": "María González",
+  "trunkId": 1,
+  "groupId": 10,
+  "evaluationConfigId": 2,
+  "score": 70,
+  "comments": "Evaluación inicial - prueba Postman con 10 mediciones...",
+  "state": "Active",
+  "creationDate": "2025-01-24T21:00:00Z",
+  "validatedAt": null,
+  "totalErrors": 3,
+  "totalSuccess": 7,
+  "totalMeasurements": 10,
+  "successRate": 0.7,
+  "totalDurationMs": 145000,
+  "averageErrorsPerMeasurement": 0.3,
+  "measurements": [ /* objetos de medición */ ]
+}
+```
+- **Nota:** Ya no se incluye el campo `isValid` en la respuesta (fue eliminado de la entidad).
+
+---
+
+### Validar evaluación
+- URL: `/api/instructor/evaluations/{evaluationId}/validate`
+- Método: `POST`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {token}`
+- Body (raw JSON):
+```json
+{
+  "score": 92,
+  "comments": "Validación final: cumple con los requisitos",
+  "signature": "firmaInstructorEjemploBase64==",
+  "evaluationConfigId": 1
+}
+```
+- **Nota:** El campo `is_valid` fue eliminado del body (ya no se usa).
+- Respuesta esperada: `200 OK` con el objeto evaluado actualizado. Ejemplo:
+```json
+{
+  "id": 456,
+  "evaluatorId": "INSTRUCTOR_GUID_1",
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "evaluatedUserFullName": "María González",
+  "score": 92,
+  "state": "Validated",
+  "validatedAt": "2025-01-24T21:30:00Z",
+  "totalErrors": 3,
+  "totalSuccess": 7,
+  "totalMeasurements": 10,
+  "successRate": 0.7,
+  "measurements": []
+}
+```
+
+### Cancelar evaluación
+- URL: `/api/instructor/evaluations/cancel`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body: mismo formato que crear evaluación (completo)
+- Respuesta: `200 OK`, evaluación cancelada. Ejemplo:
+```json
+{ "message": "Evaluation canceled" }
+```
+
+---
+
+### Obtener todas las evaluaciones del instructor
+- URL: `/api/instructor/evaluations`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve todas las evaluaciones creadas por el instructor autenticado.
+- Ejemplo de response:
+```json
+[
+  {
+    "id": 1,
+    "evaluatorId": "INSTRUCTOR_ID",
+    "evaluatedUserId": "PRACTICANTE_ID",
+    "evaluatedUserFullName": "Carlos Ruiz",
+    "trunkId": 1,
+    "groupId": 2,
+    "evaluationConfigId": 1,
+    "score": 90,
+    "comments": "Buen desempeño",
+    "state": "Validated",
+    "creationDate": "2025-01-24T20:00:00Z",
+    "validatedAt": "2025-01-24T21:00:00Z",
+    "totalErrors": 1,
+    "totalSuccess": 3,
+    "totalMeasurements": 4,
+    "successRate": 0.75,
+    "totalDurationMs": 30000,
+    "averageErrorsPerMeasurement": 0.25,
+    "measurements": []
+  }
+]
+```
+- **Nota:** Ahora incluye `evaluatedUserFullName` (nombre completo del practicante evaluado).
+
+---
+
+### Obtener evaluaciones por grupo y practicante
+- URL: `/api/instructor/evaluations/by-group-practitioner?groupId={groupId}&userId={userId}`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve evaluaciones filtradas por `groupId`, por `userId` (practicante) o por ambos. Ambos parámetros son opcionales pero se requiere al menos uno; si no se provee ninguno el endpoint responde `400 Bad Request`.
+
+Casos de uso y ejemplos:
+
+1) **Filtrar por ambos (grupo + practicante)**
+- Request: `/api/instructor/evaluations/by-group-practitioner?groupId=10&userId=PRACTICANTE_GUID_123`
+- Comportamiento: devuelve evaluaciones del grupo `10` realizadas al practicante `PRACTICANTE_GUID_123`.
+- Ejemplo de response (200 OK):
+```json
+[
+  {
+    "id": 456,
+    "evaluatorId": "INSTRUCTOR_GUID_1",
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "trunkId": 1,
+    "groupId": 10,
+    "evaluationConfigId": 2,
+    "score": 70,
+    "comments": "Evaluación...",
+
+    "state": "Active",
+    "creationDate": "2025-01-24T21:00:00Z",
+    "validatedAt": null,
+    "totalErrors": 3,
+    "totalSuccess": 7,
+    "totalMeasurements": 10,
+    "successRate": 0.7,
+    "measurements": []
+  }
+]
+```
+
+2) **Filtrar sólo por grupo**
+- Request: `/api/instructor/evaluations/by-group-practitioner?groupId=10`
+- Comportamiento: devuelve todas las evaluaciones que pertenecen al grupo `10` (de todos los practicantes del grupo).
+- Ejemplo de response (200 OK):
+```json
+[
+  { 
+    "id": 456, 
+    "evaluatedUserId": "PRACTICANTE_A",
+    "evaluatedUserFullName": "Ana López",
+    "groupId": 10, 
+    "score": 70 
+  },
+  { 
+    "id": 457, 
+    "evaluatedUserId": "PRACTICANTE_B",
+    "evaluatedUserFullName": "Luis Martín",
+    "groupId": 10, 
+    "score": 85 
+  }
+]
+```
+
+3) **Filtrar sólo por practicante (userId)**
+- Request: `/api/instructor/evaluations/by-group-practitioner?userId=PRACTICANTE_GUID_123`
+- Comportamiento: devuelve todas las evaluaciones del practicante `PRACTICANTE_GUID_123` (de todos los grupos donde tenga evaluaciones).
+- Ejemplo de response (200 OK):
+```json
+[
+  { 
+    "id": 456, 
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "groupId": 10, 
+    "score": 70 
+  },
+  { 
+    "id": 498, 
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "groupId": 12, 
+    "score": 88 
+  }
+]
+```
+
+4) **Sin filtros (error)**
+- Request: `/api/instructor/evaluations/by-group-practitioner` (sin query params)
+- Respuesta: `400 Bad Request`
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Se requiere al menos 'groupId' o 'userId' como parámetro de consulta."
+}
+```
+
+---
+
+## Configuraciones de Evaluación
+
+### Crear configuración
+- URL: `/api/instructor/evaluation-configs`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Config Avanzada",
+  "maxErrors": 5,
+  "maxSuccess": 40,
+  "maxTime": 60,
+  "maxTimeInterval": 120
+}
+```
+- **Nota:** `maxSuccess` es **obligatorio** - número máximo de aciertos esperados.
+- Respuesta: `200 OK`, configuración creada. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Config Avanzada",
+  "maxErrors": 5,
+  "maxSuccess": 40,
+  "maxTime": 60,
+  "maxTimeInterval": 120,
+  "isDefault": false,
+  "creationDate": "2025-01-24T20:00:00Z"
+}
+```
+
+---
+
+### Obtener configuraciones de evaluación
+- URL: `/api/instructor/evaluation-configs`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Respuesta: `200 OK`. Ejemplo:
+```json
+[
+  {
+    "id": 1,
+    "name": "Config Default",
+    "maxErrors": 10,
+    "maxSuccess": 30,
+    "maxTime": 30,
+    "maxTimeInterval": 60,
+    "isDefault": true,
+    "status": "Active",
+    "creationDate": "2024-06-01T12:00:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Config Avanzada",
+    "maxErrors": 5,
+    "maxSuccess": 40,
+    "maxTime": 60,
+    "maxTimeInterval": 120,
+    "isDefault": false,
+    "status": "Active",
+    "creationDate": "2024-06-01T12:05:00Z"
+  }
+]
+```
+
+---
+
+### Editar configuración
+- URL: `/api/instructor/evaluation-configs/{id}`
+- Método: `PUT`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Config Editada",
+  "maxErrors": 7,
+  "maxSuccess": 35,
+  "maxTime": 45,
+  "maxTimeInterval": 90
+}
+```
+- Respuesta: `200 OK`, configuración editada. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Config Editada",
+  "maxErrors": 7,
+  "maxSuccess": 35,
+  "maxTime": 45,
+  "maxTimeInterval": 90,
+  "isDefault": false,
+  "status": "Active"
+}
+```
+
+---
+
+### Eliminar configuración
+- URL: `/api/instructor/evaluation-configs/{id}`
+- Método: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Respuesta: `204 No Content`.
+
+
+---
+
+### Restablecer configuración a default
+- URL: `/api/instructor/groups/{groupId}/evaluation-parameters/reset`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Restablece la configuración de evaluación del grupo a la configuración por defecto del sistema. Si no existe una configuración default, la crea con valores predeterminados (`maxErrors: 10`, `maxSuccess: 30`, `maxTime: 30`).
+- Comportamiento:
+  - Busca o crea la configuración `IsDefault = true`
+  - Elimina la relación actual del grupo en `EvaluationConfigGroups`
+  - Crea una nueva relación entre el grupo y la config default
+- Respuesta: `200 OK` con la configuración default. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Default",
+  "maxErrors": 10,
+  "maxSuccess": 30,
+  "maxTime": 30,
+  "isDefault": true
+}
+```
+
+---
+
+## Simulaciones (Practitioner)
+
+### Crear simulación
+- URL: `/api/practitioner/simulations/create`
+- Método: `POST`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {token}`
+- Body (ejemplo completo con 5 mediciones):
+
+```json
+{
+  "trunkId": 1,
+  "comments": "Simulación de prueba con 5 mediciones",
+  "measurements": [
+    {
+      "timestamp": 1698150000000,
+      "elapsedMs": 10000,
+      "result": "OK",
+      "angle_deg": "0.0",
+      "angle_status": true,
+      "force_value": "32",
+      "force_status": true,
+      "touch_status": true,
+      "status": true,
+      "message": null,
+      "is_valid": true
+    }
+  ],
+  "totalDurationMs": 70000,
+  "totalMeasurements": 5,
+  "totalSuccess": 3,
+  "totalErrors": 2,
+  "successRate": 0.6,
+  "averageErrorsPerMeasurement": 0.4
+}
+```
+
+- Respuesta esperada: `200 OK` con el objeto de la simulación creada. Ejemplo:
+
+```json
+{
+  "id": 789,
+  "practitionerId": "PRACTITIONER_GUID_123",
+  "trunkId": 1,
+  "creationDate": "2025-01-24T20:45:00Z",
+  "totalDurationMs": 70000,
+  "totalErrors": 2,
+  "totalSuccess": 3,
+  "totalMeasurements": 5,
+  "successRate": 0.6,
+  "averageErrorsPerMeasurement": 0.4,
+  "comments": "Simulación de prueba con 5 mediciones",
+  "measurements": []
+}
+```
+
+---
+
+### Obtener simulaciones del practicante
+- URL: `/api/practitioner/simulations`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Respuesta: `200 OK`. Ejemplo:
+```json
+[
+
+  {
+    "id": 1,
+    "practitionerId": "PRACTICANTE_ID",
+    "trunkId": 1,
+    "creationDate": "2025-01-24T19:00:00Z",
+    "totalDurationMs": 30000,
+    "totalErrors": 1,
+    "totalSuccess": 3,
+    "totalMeasurements": 4,
+    "successRate": 0.75,
+    "averageErrorsPerMeasurement": 0.25,
+    "comments": "Simulación completa"
+  }
+]
+```
+
+---
+
+### Cancelar simulación
+- URL: `/api/practitioner/simulations/cancel`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body: mismo formato que crear simulación (completo)
+- Respuesta: `200 OK`. Ejemplo:
+```json
+{ "message": "Simulation canceled" }
+```
+
+---
+
+## Nuevos endpoints y cómo probarlos
+
+### Listar practicantes (todos o por grupo)
+- URL: `/api/instructor/practitioners` 
+- Método: `GET`
+- Params opcional: `groupId` (ej.: `/api/instructor/practitioners?groupId=123`)
+- Headers: `Authorization: Bearer {token}`
+- Comportamiento:
+  - Sin `groupId`: devuelve todos los usuarios que tienen el rol `Practitioner`.
+  - Con `groupId`: devuelve solo los practicantes que pertenecen al grupo (el grupo debe estar `Active`).
+- Ejemplo (Postman):
+  - Request GET `https://{HOST}/api/instructor/practitioners?groupId=5`
+  - Headers: `Authorization: Bearer <TOKEN>`
+  - Response ejemplo:
+  ```json
+  [
+    { "id": "USER_ID_1", "fullname": "Nombre Uno" }, 
+    { "id": "USER_ID_2", "fullname": "Nombre Dos" }
+  ]
+  ```
+
+### Ranking por grupos del instructor
+- URL: `/api/instructor/ranking`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve un ranking (resumen por grupos) para el instructor autenticado. La estructura incluye, por grupo, indicadores agregados (p.ej. promedios de score, cantidad de evaluaciones, tasas de éxito) para ayudar a comparar desempeños entre grupos.
+- Ejemplo de response (200 OK):
+```json
+[
+  {
+    "groupId": 10,
+    "groupName": "Grupo A",
+    "groupAverage": 78.6,
+    "practitioners": [
+      {
+        "userId": "PRACTICANTE_GUID_1",
+        "fullName": "María González",
+        "averageScore": 82.5,
+        "evaluationCount": 12
+      },
+      {
+        "userId": "PRACTICANTE_GUID_2",
+        "fullName": "Carlos Ruiz",
+        "averageScore": 74.7,
+        "evaluationCount": 8
+      }
+    ]
+  }
+]
+```
+
+### Eliminar evaluación permanentemente (sólo uso manual)
+- URL: `/api/instructor/evaluations/{id}`
+- Método: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: elimina físicamente la evaluación y sus mediciones de la base de datos. Uso reservado para corrección manual desde Postman o admin tools.
+- Ejemplo (Postman):
+  - Request DELETE `https://{HOST}/api/instructor/evaluations/123`
+  - Headers: `Authorization: Bearer <TOKEN>`
+  - Response: `204 No Content`
+
+### Eliminar simulación permanentemente (sólo uso manual)
+- URL: `/api/instructor/simulations/{id}`
+- Método: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: elimina físicamente la simulación y sus mediciones de la base de datos. Uso reservado para corrección manual desde Postman o admin tools.
+- Ejemplo (Postman):
+  - Request DELETE `https://{HOST}/api/instructor/simulations/789`
+  - Headers: `Authorization: Bearer <TOKEN>`
+  - Response: `204 No Content`
+
+---
+
+### Endpoints de manejo rápido para administracción (incluye asignación/desasignación en evaluaciones)
+
+- Asignar practicante a evaluación (POST) `https://{HOST}/api/instructor/evaluations/{evaluationId}/assign-practitioner/{userId}`
+- Desasignar practicante de evaluación (POST) `https://{HOST}/api/instructor/evaluations/{evaluationId}/unassign-practitioner`
+
+---
+
+## Cambios recientes en la API (Enero 2025)
+
+### 1. Campo `IsValid` eliminado de Evaluaciones
+- **Qué cambió:** El campo `isValid` fue eliminado de la entidad `Evaluation` y de todos los DTOs relacionados.
+- **Endpoints afectados:**
+  - `POST /api/instructor/evaluations/create` - response ya no incluye `isValid`
+  - `POST /api/instructor/evaluations/{id}/validate` - body ya no requiere/acepta `is_valid`
+  - `GET /api/instructor/evaluations` - response ya no incluye `isValid`
+  - `GET /api/instructor/evaluations/by-group-practitioner` - response ya no incluye `isValid`
+- **Acción requerida:** Clientes mobile deben remover referencias a `isValid` en evaluaciones.
+
+### 2. Campo `MaxSuccess` agregado a EvaluationConfig
+- **Qué cambió:** Nuevo campo obligatorio `maxSuccess` en configuraciones de evaluación.
+- **Endpoints afectados:**
+  - `POST /api/instructor/evaluation-configs` - body requiere `maxSuccess`
+  - `PUT /api/instructor/evaluation-configs/{id}` - body requiere `maxSuccess`
+  - `GET /api/instructor/evaluation-configs` - response incluye `maxSuccess`
+  - `POST /api/instructor/groups/{groupId}/evaluation-parameters/reset` - response incluye `maxSuccess`
+- **Valor por defecto:** 30 aciertos
+- **Acción requerida:** Clientes mobile deben incluir `maxSuccess` al crear/editar configs.
+
+### 3. Campo `EvaluationDate` agregado a Groups
+- **Qué cambió:** Nuevo campo obligatorio `evaluationDate` en grupos (fecha programada de evaluación).
+- **Endpoints afectados:**
+  - `POST /api/instructor/groups` - body requiere `evaluationDate`
+  - `PUT /api/instructor/groups/{id}` - body requiere `evaluationDate`
+  - `GET /api/instructor/groups/owned` - response incluye `evaluationDate`
+- **Acción requerida:** Clientes mobile deben permitir al usuario seleccionar `evaluationDate` al crear/editar grupos.
+
+### 4. Campo `EvaluatedUserFullName` agregado a Evaluaciones
+- **Qué cambió:** Las respuestas de evaluaciones ahora incluyen el nombre completo del practicante evaluado.
+- **Endpoints afectados:**
+  - `GET /api/instructor/evaluaciones` - response incluye `evaluatedUserFullName`
+  - `GET /api/instructor/evaluaciones/by-group-practitioner` - response incluye `evaluatedUserFullName`
+  - `POST /api/instructor/evaluations/{id}/validate` - response incluye `evaluatedUserFullName`
+- **Beneficio:** No es necesario hacer llamadas adicionales para obtener el nombre del practicante.
+
+---
+
+Última actualización: Enero 2025 - documentación actualizada con cambios de schema de base de datos.
+
+---
+
+# Heimlich API - Endpoint Documentation
+
+Base URL (production)
+- https://heimlich-api-unlam.azurewebsites.net
+
+Common headers
+- `Content-Type: application/json`
+- `Authorization: Bearer {token}` (for protected endpoints)
+
+JWT Token
+- The login endpoint returns a JWT in the body. The field may be called `token` or `access_token` depending on the client version. Use that value in the `Authorization: Bearer {token}` header.
+- Configuration note: the JWT key (`Jwt__Key`) and `Jwt__Issuer` / `Jwt__Audience` values are configured in App Service -> Configuration (or in Key Vault) in production. Ensure that the mobile app uses the same `Audience` as configured in the API.
+
+How to quickly test
+- Postman: POST to the login endpoint, copy token and use in Authorization -> Bearer Token.
+- curl example:
+  - Get token:
+    `curl -X POST -H "Content-Type: application/json" -d '{"userName":"yourUser","password":"yourPass"}' https://heimlich-api-unlam.azurewebsites.net/api/auth/login`
+  - Call protected endpoint:
+    `curl -H "Authorization: Bearer <TOKEN>" https://heimlich-api-unlam.azurewebsites.net/api/instructor/evaluations`
+- React Native (fetch + AsyncStorage):
+  - Save token after login and add `Authorization` in subsequent fetch requests. (See examples at the end of the document.)
+
+Note on CORS
+- Native applications (React Native Android/iOS) do not require CORS configuration.
+- Web/SPA applications must have their origin added to the backend CORS policy. In production, the expected origin is `https://heimlich-app-mobile.azurestaticapps.net`.
+- If you need another origin, request to add it in App Service -> Configuration or modify the CORS policy in `Program.cs`.
+
+Swagger
+- Swagger is disabled by default in production (`EnableSwagger=false`). To see the documentation in development, enable `EnableSwagger=true` in configuration or check locally with `dotnet run`.
+
+Application Insights
+- Application Insights is enabled in production and the connection string is found in App Service -> Configuration as `APPLICATIONINSIGHTS_CONNECTION_STRING`.
+- You can use `Live Metrics` to see requests in real time and `Failures` to review exceptions.
+
+Authentication
+- All endpoints require JWT except `/api/auth/register` and `/api/auth/login`.
+- Make sure to use the configured `Issuer` and `Audience` in the app to validate tokens.
+
+Deployment and database notes
+- In production, the application uses the `DefaultConnection` string configured in App Service -> Connection strings. In this project, we have configured the application to support authentication using Managed Identity (Azure AD) using `Authentication=Active Directory Default` in the connection string.
+- For the API to create tables through migrations on startup, the App Service's Managed Identity must exist and have permissions on the database (e.g. `db_owner` temporary or `db_ddladmin`/`db_datareader`/`db_datawriter` roles).
+- For security, automatic migration execution is disabled by default; it can be temporarily activated with `ApplyMigrationsOnStartup=true` in App Service -> Configuration.
+
+---
+
+# Endpoints
+
+## Authentication
+
+### Register user
+- URL: `/api/auth/register`
+- Method: `POST`
+- Body:
+```json
+{
+  "userName": "newUser",
+  "fullName": "Name Surname",
+  "email": "email@domain.com",
+  "password": "YourPassword123",
+  "role": 2
+}
+```
+- Response: `201 Created` (user data). Example response:
+```json
+{
+  "id": "USER-GUID",
+  "userName": "newUser",
+  "email": "email@domain.com",
+  "fullName": "Name Surname",
+  "roles": [2]
+}
+```
+
+---
+
+### Login
+- URL: `/api/auth/login`
+- Method: `POST`
+- Body:
+```json
+{
+  "userName": "newUser",
+  "password": "YourPassword123"
+}
+```
+- Response: `200 OK` with JWT token in the body. Example:
+```json
+{
+  "token": "eyJhbGci...",
+  "expiresIn": 3600,
+  "user": { "id": "USER-GUID", "userName": "newUser" }
+}
+```
+
+---
+
+### Logout
+- URL: `/api/auth/logout`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body: empty
+- Response: `200 OK`. Example:
+```json
+{ "message": "Logout successful" }
+```
+
+---
+
+### User profile
+- URL: `/api/auth/profile?userId={id}`  
+- Method: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`, user data. Example:
+```json
+{
+  "id": "USER-GUID",
+  "userName": "newUser",
+  "fullName": "Name Surname",
+  "email": "email@domain.com",
+  "roles": [2]
+}
+```
+
+---
+
+### Change password
+- URL: `/api/auth/change-password`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "currentPassword": "YourPassword123",
+  "newPassword": "NewPassword456"
+}
+```
+- Response: `200 OK`. Example:
+```json
+{ "message": "Password changed successfully" }
+```
+
+---
+
+## Groups (Instructor)
+
+### Create group
+- URL: `/api/instructor/groups`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Group A",
+  "description": "Initial training",
+  "evaluationDate": "2025-02-15T10:00:00Z",
+  "practitionerIds": ["USER_ID_1", "USER_ID_2"],
+  "evaluationConfigId": 1
+}
+```
+- **Note:** `evaluationDate` is **mandatory** - date when the group's evaluation will be scheduled.
+- Response: `200 OK`, data of the created group. Example:
+```json
+{
+  "id": 123,
+  "name": "Group A",
+  "description": "Initial training",
+  "creationDate": "2025-01-24T20:00:00Z",
+  "evaluationDate": "2025-02-15T10:00:00Z",
+  "status": "Active",
+  "ownerInstructorId": "INSTRUCTOR_ID",
+  "ownerInstructorName": "Juan Pérez",
+  "practitionerIds": ["USER_ID_1", "USER_ID_2"]
+}
+```
+
+---
+
+### Get instructor's groups
+- URL: `/api/instructor/groups/owned`
+- Method: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`. Example:
+```json
+[
+  {
+    "id": 123,
+    "name": "Group A",
+    "description": "Initial training",
+    "creationDate": "2025-01-24T20:00:00Z",
+    "evaluationDate": "2025-02-15T10:00:00Z",
+    "status": "Active",
+    "ownerInstructorId": "INSTRUCTOR_ID",
+    "ownerInstructorName": "Juan Pérez",
+    "practitionerIds": ["USER_ID_1", "USER_ID_2"]
+  }
+]
+```
+
+---
+
+### Edit group
+- URL: `/api/instructor/groups/{groupId}`
+- Method: `PUT`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Edited Group A",
+  "description": "New description",
+  "evaluationDate": "2025-02-20T14:00:00Z",
+  "practitionerIds": ["USER_ID_1", "USER_ID_3"]
+}
+```
+- **Note:** `evaluationDate` is **mandatory**.
+- Response: `200 OK`. Example:
+```json
+{
+  "id": 123,
+  "name": "Edited Group A",
+  "description": "New description",
+  "creationDate": "2025-01-24T20:00:00Z",
+  "evaluationDate": "2025-02-20T14:00:00Z",
+  "status": "Active",
+  "ownerInstructorId": "INSTRUCTOR_ID",
+  "ownerInstructorName": "Juan Pérez",
+  "practitionerIds": ["USER_ID_1", "USER_ID_3"]
+}
+```
+
+---
+
+### Delete group
+- URL: `/api/instructor/groups/{id}`
+- Method: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Response: `204 No Content`.
+
+
+---
+
+### Assign evaluation configuration to group
+- URL: `/api/instructor/groups/{groupId}/config/{configId}`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`, configuration linked. Example:
+```json
+{ "message": "Configuration assigned" }
+```
+
+---
+
+### View groups assigned to practitioner
+- URL: `/api/instructor/groups/assigned?userId={userId}`
+- Method: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`, data of the group assigned to the practitioner. Example:
+```json
+[
+  {
+    "id": 123,
+    "name": "Group A",
+    "evaluationDate": "2025-02-15T10:00:00Z",
+    "assignedTo": "PRACTICANTE_ID"
+  }
+]
+```
+
+---
+
+## Evaluaciones (Instructor)
+
+### Crear evaluación
+- URL: `/api/instructor/evaluations/create`
+- Método: `POST`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {token}`
+- Body (completo, ejemplo con 10 mediciones y agregados):
+```json
+{
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "trunkId": 1,
+  "groupId": 10,
+  "comments": "Evaluación inicial - prueba Postman con 10 mediciones.",
+  "score": 70,
+  "measurements": [
+    {
+      "timestamp": 1698140000000,
+      "elapsedMs": 10000,
+      "result": "OK",
+      "angle_deg": "0.0",
+      "angle_status": true,
+      "force_value": "32",
+      "force_status": true,
+      "touch_status": true,
+      "status": true,
+      "message": null,
+      "is_valid": true
+    }
+  ],
+  "totalDurationMs": 145000,
+  "totalMeasurements": 10,
+  "totalSuccess": 7,
+  "totalErrors": 3,
+  "successRate": 0.7,
+  "averageErrorsPerMeasurement": 0.3
+}
+```
+- Respuesta esperada (ejemplo): `200 OK` con el objeto de la evaluación creada. Ejemplo de response:
+```json
+{
+  "id": 456,
+  "evaluatorId": "INSTRUCTOR_GUID_1",
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "evaluatedUserFullName": "María González",
+  "trunkId": 1,
+  "groupId": 10,
+  "evaluationConfigId": 2,
+  "score": 70,
+  "comments": "Evaluación inicial - prueba Postman con 10 mediciones...",
+  "state": "Active",
+  "creationDate": "2025-01-24T21:00:00Z",
+  "validatedAt": null,
+  "totalErrors": 3,
+  "totalSuccess": 7,
+  "totalMeasurements": 10,
+  "successRate": 0.7,
+  "totalDurationMs": 145000,
+  "averageErrorsPerMeasurement": 0.3,
+  "measurements": [ /* objetos de medición */ ]
+}
+```
+- **Nota:** Ya no se incluye el campo `isValid` en la respuesta (fue eliminado de la entidad).
+
+---
+
+### Validar evaluación
+- URL: `/api/instructor/evaluations/{evaluationId}/validate`
+- Método: `POST`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {token}`
+- Body (raw JSON):
+```json
+{
+  "score": 92,
+  "comments": "Validación final: cumple con los requisitos",
+  "signature": "firmaInstructorEjemploBase64==",
+  "evaluationConfigId": 1
+}
+```
+- **Nota:** El campo `is_valid` fue eliminado del body (ya no se usa).
+- Respuesta esperada: `200 OK` con el objeto evaluado actualizado. Ejemplo:
+```json
+{
+  "id": 456,
+  "evaluatorId": "INSTRUCTOR_GUID_1",
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "evaluatedUserFullName": "María González",
+  "score": 92,
+  "state": "Validated",
+  "validatedAt": "2025-01-24T21:30:00Z",
+  "totalErrors": 3,
+  "totalSuccess": 7,
+  "totalMeasurements": 10,
+  "successRate": 0.7,
+  "measurements": []
+}
+```
+
+### Cancelar evaluación
+- URL: `/api/instructor/evaluations/cancel`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body: mismo formato que crear evaluación (completo)
+- Respuesta: `200 OK`, evaluación cancelada. Ejemplo:
+```json
+{ "message": "Evaluation canceled" }
+```
+
+---
+
+### Obtener todas las evaluaciones del instructor
+- URL: `/api/instructor/evaluations`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve todas las evaluaciones creadas por el instructor autenticado.
+- Ejemplo de response:
+```json
+[
+  {
+    "id": 1,
+    "evaluatorId": "INSTRUCTOR_ID",
+    "evaluatedUserId": "PRACTICANTE_ID",
+    "evaluatedUserFullName": "Carlos Ruiz",
+    "trunkId": 1,
+    "groupId": 2,
+    "evaluationConfigId": 1,
+    "score": 90,
+    "comments": "Buen desempeño",
+    "state": "Validated",
+    "creationDate": "2025-01-24T20:00:00Z",
+    "validatedAt": "2025-01-24T21:00:00Z",
+    "totalErrors": 1,
+    "totalSuccess": 3,
+    "totalMeasurements": 4,
+    "successRate": 0.75,
+    "totalDurationMs": 30000,
+    "averageErrorsPerMeasurement": 0.25,
+    "measurements": []
+  }
+]
+```
+- **Nota:** Ahora incluye `evaluatedUserFullName` (nombre completo del practicante evaluado).
+
+---
+
+### Obtener evaluaciones por grupo y practicante
+- URL: `/api/instructor/evaluations/by-group-practitioner?groupId={groupId}&userId={userId}`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve evaluaciones filtradas por `groupId`, por `userId` (practicante) o por ambos. Ambos parámetros son opcionales pero se requiere al menos uno; si no se provee ninguno el endpoint responde `400 Bad Request`.
+
+Casos de uso y ejemplos:
+
+1) **Filtrar por ambos (grupo + practicante)**
+- Request: `/api/instructor/evaluations/by-group-practitioner?groupId=10&userId=PRACTICANTE_GUID_123`
+- Comportamiento: devuelve evaluaciones del grupo `10` realizadas al practicante `PRACTICANTE_GUID_123`.
+- Ejemplo de response (200 OK):
+```json
+[
+  {
+    "id": 456,
+    "evaluatorId": "INSTRUCTOR_GUID_1",
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "trunkId": 1,
+    "groupId": 10,
+    "evaluationConfigId": 2,
+    "score": 70,
+    "comments": "Evaluación...",
+
+    "state": "Active",
+    "creationDate": "2025-01-24T21:00:00Z",
+    "validatedAt": null,
+    "totalErrors": 3,
+    "totalSuccess": 7,
+    "totalMeasurements": 10,
+    "successRate": 0.7,
+    "measurements": []
+  }
+]
+```
+
+2) **Filtrar sólo por grupo**
+- Request: `/api/instructor/evaluations/by-group-practitioner?groupId=10`
+- Comportamiento: devuelve todas las evaluaciones que pertenecen al grupo `10` (de todos los practicantes del grupo).
+- Ejemplo de response (200 OK):
+```json
+[
+  { 
+    "id": 456, 
+    "evaluatedUserId": "PRACTICANTE_A",
+    "evaluatedUserFullName": "Ana López",
+    "groupId": 10, 
+    "score": 70 
+  },
+  { 
+    "id": 457, 
+    "evaluatedUserId": "PRACTICANTE_B",
+    "evaluatedUserFullName": "Luis Martín",
+    "groupId": 10, 
+    "score": 85 
+  }
+]
+```
+
+3) **Filtrar sólo por practicante (userId)**
+- Request: `/api/instructor/evaluations/by-group-practitioner?userId=PRACTICANTE_GUID_123`
+- Comportamiento: devuelve todas las evaluaciones del practicante `PRACTICANTE_GUID_123` (de todos los grupos donde tenga evaluaciones).
+- Ejemplo de response (200 OK):
+```json
+[
+  { 
+    "id": 456, 
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "groupId": 10, 
+    "score": 70 
+  },
+  { 
+    "id": 498, 
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "groupId": 12, 
+    "score": 88 
+  }
+]
+```
+
+4) **Sin filtros (error)**
+- Request: `/api/instructor/evaluations/by-group-practitioner` (sin query params)
+- Respuesta: `400 Bad Request`
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Se requiere al menos 'groupId' o 'userId' como parámetro de consulta."
+}
+```
+
+---
+
+## Configuraciones de Evaluación
+
+### Crear configuración
+- URL: `/api/instructor/evaluation-configs`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Config Avanzada",
+  "maxErrors": 5,
+  "maxSuccess": 40,
+  "maxTime": 60,
+  "maxTimeInterval": 120
+}
+```
+- **Nota:** `maxSuccess` es **obligatorio** - número máximo de aciertos esperados.
+- Respuesta: `200 OK`, configuración creada. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Config Avanzada",
+  "maxErrors": 5,
+  "maxSuccess": 40,
+  "maxTime": 60,
+  "maxTimeInterval": 120,
+  "isDefault": false,
+  "creationDate": "2025-01-24T20:00:00Z"
+}
+```
+
+---
+
+### Obtener configuraciones de evaluación
+- URL: `/api/instructor/evaluation-configs`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Respuesta: `200 OK`. Ejemplo:
+```json
+[
+  {
+    "id": 1,
+    "name": "Config Default",
+    "maxErrors": 10,
+    "maxSuccess": 30,
+    "maxTime": 30,
+    "maxTimeInterval": 60,
+    "isDefault": true,
+    "status": "Active",
+    "creationDate": "2024-06-01T12:00:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Config Avanzada",
+    "maxErrors": 5,
+    "maxSuccess": 40,
+    "maxTime": 60,
+    "maxTimeInterval": 120,
+    "isDefault": false,
+    "status": "Active",
+    "creationDate": "2024-06-01T12:05:00Z"
+  }
+]
+```
+
+---
+
+### Editar configuración
+- URL: `/api/instructor/evaluation-configs/{id}`
+- Método: `PUT`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Config Editada",
+  "maxErrors": 7,
+  "maxSuccess": 35,
+  "maxTime": 45,
+  "maxTimeInterval": 90
+}
+```
+- Respuesta: `200 OK`, configuración editada. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Config Editada",
+  "maxErrors": 7,
+  "maxSuccess": 35,
+  "maxTime": 45,
+  "maxTimeInterval": 90,
+  "isDefault": false,
+  "status": "Active"
+}
+```
+
+---
+
+### Eliminar configuración
+- URL: `/api/instructor/evaluation-configs/{id}`
+- Método: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Respuesta: `204 No Content`.
+
+
+---
+
+### Restablecer configuración a default
+- URL: `/api/instructor/groups/{groupId}/evaluation-parameters/reset`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Restablece la configuración de evaluación del grupo a la configuración por defecto del sistema. Si no existe una configuración default, la crea con valores predeterminados (`maxErrors: 10`, `maxSuccess: 30`, `maxTime: 30`).
+- Comportamiento:
+  - Busca o crea la configuración `IsDefault = true`
+  - Elimina la relación actual del grupo en `EvaluationConfigGroups`
+  - Crea una nueva relación entre el grupo y la config default
+- Respuesta: `200 OK` con la configuración default. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Default",
+  "maxErrors": 10,
+  "maxSuccess": 30,
+  "maxTime": 30,
+  "isDefault": true
+}
+```
+
+---
+
+## Simulaciones (Practitioner)
+
+### Crear simulación
+- URL: `/api/practitioner/simulations/create`
+- Método: `POST`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {token}`
+- Body (ejemplo completo con 5 mediciones):
+
+```json
+{
+  "trunkId": 1,
+  "comments": "Simulación de prueba con 5 mediciones",
+  "measurements": [
+    {
+      "timestamp": 1698150000000,
+      "elapsedMs": 10000,
+      "result": "OK",
+      "angle_deg": "0.0",
+      "angle_status": true,
+      "force_value": "32",
+      "force_status": true,
+      "touch_status": true,
+      "status": true,
+      "message": null,
+      "is_valid": true
+    }
+  ],
+  "totalDurationMs": 70000,
+  "totalMeasurements": 5,
+  "totalSuccess": 3,
+  "totalErrors": 2,
+  "successRate": 0.6,
+  "averageErrorsPerMeasurement": 0.4
+}
+```
+
+- Respuesta esperada: `200 OK` con el objeto de la simulación creada. Ejemplo:
+
+```json
+{
+  "id": 789,
+  "practitionerId": "PRACTITIONER_GUID_123",
+  "trunkId": 1,
+  "creationDate": "2025-01-24T20:45:00Z",
+  "totalDurationMs": 70000,
+  "totalErrors": 2,
+  "totalSuccess": 3,
+  "totalMeasurements": 5,
+  "successRate": 0.6,
+  "averageErrorsPerMeasurement": 0.4,
+  "comments": "Simulación de prueba con 5 mediciones",
+  "measurements": []
+}
+```
+
+---
+
+### Obtener simulaciones del practicante
+- URL: `/api/practitioner/simulations`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Respuesta: `200 OK`. Ejemplo:
+```json
+[
+
+  {
+    "id": 1,
+    "practitionerId": "PRACTICANTE_ID",
+    "trunkId": 1,
+    "creationDate": "2025-01-24T19:00:00Z",
+    "totalDurationMs": 30000,
+    "totalErrors": 1,
+    "totalSuccess": 3,
+    "totalMeasurements": 4,
+    "successRate": 0.75,
+    "averageErrorsPerMeasurement": 0.25,
+    "comments": "Simulación completa"
+  }
+]
+```
+
+---
+
+### Cancelar simulación
+- URL: `/api/practitioner/simulations/cancel`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body: mismo formato que crear simulación (completo)
+- Respuesta: `200 OK`. Ejemplo:
+```json
+{ "message": "Simulation canceled" }
+```
+
+---
+
+## Nuevos endpoints y cómo probarlos
+
+### Listar practicantes (todos o por grupo)
+- URL: `/api/instructor/practitioners` 
+- Método: `GET`
+- Params opcional: `groupId` (ej.: `/api/instructor/practitioners?groupId=123`)
+- Headers: `Authorization: Bearer {token}`
+- Comportamiento:
+  - Sin `groupId`: devuelve todos los usuarios que tienen el rol `Practitioner`.
+  - Con `groupId`: devuelve solo los practicantes que pertenecen al grupo (el grupo debe estar `Active`).
+- Ejemplo (Postman):
+  - Request GET `https://{HOST}/api/instructor/practitioners?groupId=5`
+  - Headers: `Authorization: Bearer <TOKEN>`
+  - Response ejemplo:
+  ```json
+  [
+    { "id": "USER_ID_1", "fullname": "Nombre Uno" }, 
+    { "id": "USER_ID_2", "fullname": "Nombre Dos" }
+  ]
+  ```
+
+### Ranking por grupos del instructor
+- URL: `/api/instructor/ranking`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve un ranking (resumen por grupos) para el instructor autenticado. La estructura incluye, por grupo, indicadores agregados (p.ej. promedios de score, cantidad de evaluaciones, tasas de éxito) para ayudar a comparar desempen?os entre grupos.
+- Ejemplo de response (200 OK):
+```json
+[
+  {
+    "groupId": 10,
+    "groupName": "Grupo A",
+    "groupAverage": 78.6,
+    "practitioners": [
+      {
+        "userId": "PRACTICANTE_GUID_1",
+        "fullName": "María González",
+        "averageScore": 82.5,
+        "evaluationCount": 12
+      },
+      {
+        "userId": "PRACTICANTE_GUID_2",
+        "fullName": "Carlos Ruiz",
+        "averageScore": 74.7,
+        "evaluationCount": 8
+      }
+    ]
+  }
+]
+```
+
+### Eliminar evaluación permanentemente (sólo uso manual)
+- URL: `/api/instructor/evaluations/{id}`
+- Método: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: elimina físicamente la evaluación y sus mediciones de la base de datos. Uso reservado para corrección manual desde Postman o admin tools.
+- Ejemplo (Postman):
+  - Request DELETE `https://{HOST}/api/instructor/evaluations/123`
+  - Headers: `Authorization: Bearer <TOKEN>`
+  - Response: `204 No Content`
+
+### Eliminar simulación permanentemente (sólo uso manual)
+- URL: `/api/instructor/simulations/{id}`
+- Método: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: elimina físicamente la simulación y sus mediciones de la base de datos. Uso reservado para corrección manual desde Postman o admin tools.
+- Ejemplo (Postman):
+  - Request DELETE `https://{HOST}/api/instructor/simulations/789`
+  - Headers: `Authorization: Bearer <TOKEN>`
+  - Response: `204 No Content`
+
+---
+
+### Endpoints de manejo rápido para administracción (incluye asignación/desasignación en evaluaciones)
+
+- Asignar practicante a evaluación (POST) `https://{HOST}/api/instructor/evaluations/{evaluationId}/assign-practitioner/{userId}`
+- Desasignar practicante de evaluación (POST) `https://{HOST}/api/instructor/evaluations/{evaluationId}/unassign-practitioner`
+
+---
+
+## Cambios recientes en la API (Enero 2025)
+
+### 1. Campo `IsValid` eliminado de Evaluaciones
+- **Qué cambió:** El campo `isValid` fue eliminado de la entidad `Evaluation` y de todos los DTOs relacionados.
+- **Endpoints afectados:**
+  - `POST /api/instructor/evaluations/create` - response ya no incluye `isValid`
+  - `POST /api/instructor/evaluations/{id}/validate` - body ya no requiere/acepta `is_valid`
+  - `GET /api/instructor/evaluations` - response ya no incluye `isValid`
+  - `GET /api/instructor/evaluations/by-group-practitioner` - response ya no incluye `isValid`
+- **Acción requerida:** Clientes mobile deben remover referencias a `isValid` en evaluaciones.
+
+### 2. Campo `MaxSuccess` agregado a EvaluationConfig
+- **Qué cambió:** Nuevo campo obligatorio `maxSuccess` en configuraciones de evaluación.
+- **Endpoints afectados:**
+  - `POST /api/instructor/evaluation-configs` - body requiere `maxSuccess`
+  - `PUT /api/instructor/evaluation-configs/{id}` - body requiere `maxSuccess`
+  - `GET /api/instructor/evaluation-configs` - response incluye `maxSuccess`
+  - `POST /api/instructor/groups/{groupId}/evaluation-parameters/reset` - response incluye `maxSuccess`
+- **Valor por defecto:** 30 aciertos
+- **Acción requerida:** Clientes mobile deben incluir `maxSuccess` al crear/editar configs.
+
+### 3. Campo `EvaluationDate` agregado a Groups
+- **Qué cambió:** Nuevo campo obligatorio `evaluationDate` en grupos (fecha programada de evaluación).
+- **Endpoints afectados:**
+  - `POST /api/instructor/groups` - body requiere `evaluationDate`
+  - `PUT /api/instructor/groups/{id}` - body requiere `evaluationDate`
+  - `GET /api/instructor/groups/owned` - response incluye `evaluationDate`
+- **Acción requerida:** Clientes mobile deben permitir al usuario seleccionar `evaluationDate` al crear/editar grupos.
+
+### 4. Campo `EvaluatedUserFullName` agregado a Evaluaciones
+- **Qué cambió:** Las respuestas de evaluaciones ahora incluyen el nombre completo del practicante evaluado.
+- **Endpoints afectados:**
+  - `GET /api/instructor/evaluaciones` - response incluye `evaluatedUserFullName`
+  - `GET /api/instructor/evaluaciones/by-group-practitioner` - response incluye `evaluatedUserFullName`
+  - `POST /api/instructor/evaluations/{id}/validate` - response incluye `evaluatedUserFullName`
+- **Beneficio:** No es necesario hacer llamadas adicionales para obtener el nombre del practicante.
+
+---
+
+Última actualización: Enero 2025 - documentación actualizada con cambios de schema de base de datos.
+
+---
+
+# Heimlich API - Endpoint Documentation
+
+Base URL (production)
+- https://heimlich-api-unlam.azurewebsites.net
+
+Common headers
+- `Content-Type: application/json`
+- `Authorization: Bearer {token}` (for protected endpoints)
+
+JWT Token
+- The login endpoint returns a JWT in the body. The field may be called `token` or `access_token` depending on the client version. Use that value in the `Authorization: Bearer {token}` header.
+- Configuration note: the JWT key (`Jwt__Key`) and `Jwt__Issuer` / `Jwt__Audience` values are configured in App Service -> Configuration (or in Key Vault) in production. Ensure that the mobile app uses the same `Audience` as configured in the API.
+
+How to quickly test
+- Postman: POST to the login endpoint, copy token and use in Authorization -> Bearer Token.
+- curl example:
+  - Get token:
+    `curl -X POST -H "Content-Type: application/json" -d '{"userName":"yourUser","password":"yourPass"}' https://heimlich-api-unlam.azurewebsites.net/api/auth/login`
+  - Call protected endpoint:
+    `curl -H "Authorization: Bearer <TOKEN>" https://heimlich-api-unlam.azurewebsites.net/api/instructor/evaluations`
+- React Native (fetch + AsyncStorage):
+  - Save token after login and add `Authorization` in subsequent fetch requests. (See examples at the end of the document.)
+
+Note on CORS
+- Native applications (React Native Android/iOS) do not require CORS configuration.
+- Web/SPA applications must have their origin added to the backend CORS policy. In production, the expected origin is `https://heimlich-app-mobile.azurestaticapps.net`.
+- If you need another origin, request to add it in App Service -> Configuration or modify the CORS policy in `Program.cs`.
+
+Swagger
+- Swagger is disabled by default in production (`EnableSwagger=false`). To see the documentation in development, enable `EnableSwagger=true` in configuration or check locally with `dotnet run`.
+
+Application Insights
+- Application Insights is enabled in production and the connection string is found in App Service -> Configuration as `APPLICATIONINSIGHTS_CONNECTION_STRING`.
+- You can use `Live Metrics` to see requests in real time and `Failures` to review exceptions.
+
+Authentication
+- All endpoints require JWT except `/api/auth/register` and `/api/auth/login`.
+- Make sure to use the configured `Issuer` and `Audience` in the app to validate tokens.
+
+Deployment and database notes
+- In production, the application uses the `DefaultConnection` string configured in App Service -> Connection strings. In this project, we have configured the application to support authentication using Managed Identity (Azure AD) using `Authentication=Active Directory Default` in the connection string.
+- For the API to create tables through migrations on startup, the App Service's Managed Identity must exist and have permissions on the database (e.g. `db_owner` temporary or `db_ddladmin`/`db_datareader`/`db_datawriter` roles).
+- For security, automatic migration execution is disabled by default; it can be temporarily activated with `ApplyMigrationsOnStartup=true` in App Service -> Configuration.
+
+---
+
+# Endpoints
+
+## Authentication
+
+### Register user
+- URL: `/api/auth/register`
+- Method: `POST`
+- Body:
+```json
+{
+  "userName": "newUser",
+  "fullName": "Name Surname",
+  "email": "email@domain.com",
+  "password": "YourPassword123",
+  "role": 2
+}
+```
+- Response: `201 Created` (user data). Example response:
+```json
+{
+  "id": "USER-GUID",
+  "userName": "newUser",
+  "email": "email@domain.com",
+  "fullName": "Name Surname",
+  "roles": [2]
+}
+```
+
+---
+
+### Login
+- URL: `/api/auth/login`
+- Method: `POST`
+- Body:
+```json
+{
+  "userName": "newUser",
+  "password": "YourPassword123"
+}
+```
+- Response: `200 OK` with JWT token in the body. Example:
+```json
+{
+  "token": "eyJhbGci...",
+  "expiresIn": 3600,
+  "user": { "id": "USER-GUID", "userName": "newUser" }
+}
+```
+
+---
+
+### Logout
+- URL: `/api/auth/logout`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body: empty
+- Response: `200 OK`. Example:
+```json
+{ "message": "Logout successful" }
+```
+
+---
+
+### User profile
+- URL: `/api/auth/profile?userId={id}`  
+- Method: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`, user data. Example:
+```json
+{
+  "id": "USER-GUID",
+  "userName": "newUser",
+  "fullName": "Name Surname",
+  "email": "email@domain.com",
+  "roles": [2]
+}
+```
+
+---
+
+### Change password
+- URL: `/api/auth/change-password`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "currentPassword": "YourPassword123",
+  "newPassword": "NewPassword456"
+}
+```
+- Response: `200 OK`. Example:
+```json
+{ "message": "Password changed successfully" }
+```
+
+---
+
+## Groups (Instructor)
+
+### Create group
+- URL: `/api/instructor/groups`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Group A",
+  "description": "Initial training",
+  "evaluationDate": "2025-02-15T10:00:00Z",
+  "practitionerIds": ["USER_ID_1", "USER_ID_2"],
+  "evaluationConfigId": 1
+}
+```
+- **Note:** `evaluationDate` is **mandatory** - date when the group's evaluation will be scheduled.
+- Response: `200 OK`, data of the created group. Example:
+```json
+{
+  "id": 123,
+  "name": "Group A",
+  "description": "Initial training",
+  "creationDate": "2025-01-24T20:00:00Z",
+  "evaluationDate": "2025-02-15T10:00:00Z",
+  "status": "Active",
+  "ownerInstructorId": "INSTRUCTOR_ID",
+  "ownerInstructorName": "Juan Pérez",
+  "practitionerIds": ["USER_ID_1", "USER_ID_2"]
+}
+```
+
+---
+
+### Get instructor's groups
+- URL: `/api/instructor/groups/owned`
+- Method: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`. Example:
+```json
+[
+  {
+    "id": 123,
+    "name": "Group A",
+    "description": "Initial training",
+    "creationDate": "2025-01-24T20:00:00Z",
+    "evaluationDate": "2025-02-15T10:00:00Z",
+    "status": "Active",
+    "ownerInstructorId": "INSTRUCTOR_ID",
+    "ownerInstructorName": "Juan Pérez",
+    "practitionerIds": ["USER_ID_1", "USER_ID_2"]
+  }
+]
+```
+
+---
+
+### Edit group
+- URL: `/api/instructor/groups/{groupId}`
+- Method: `PUT`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Edited Group A",
+  "description": "New description",
+  "evaluationDate": "2025-02-20T14:00:00Z",
+  "practitionerIds": ["USER_ID_1", "USER_ID_3"]
+}
+```
+- **Note:** `evaluationDate` is **mandatory**.
+- Response: `200 OK`. Example:
+```json
+{
+  "id": 123,
+  "name": "Edited Group A",
+  "description": "New description",
+  "creationDate": "2025-01-24T20:00:00Z",
+  "evaluationDate": "2025-02-20T14:00:00Z",
+  "status": "Active",
+  "ownerInstructorId": "INSTRUCTOR_ID",
+  "ownerInstructorName": "Juan Pérez",
+  "practitionerIds": ["USER_ID_1", "USER_ID_3"]
+}
+```
+
+---
+
+### Delete group
+- URL: `/api/instructor/groups/{id}`
+- Method: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Response: `204 No Content`.
+
+
+---
+
+### Assign evaluation configuration to group
+- URL: `/api/instructor/groups/{groupId}/config/{configId}`
+- Method: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`, configuration linked. Example:
+```json
+{ "message": "Configuration assigned" }
+```
+
+---
+
+### View groups assigned to practitioner
+- URL: `/api/instructor/groups/assigned?userId={userId}`
+- Method: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Response: `200 OK`, data of the group assigned to the practitioner. Example:
+```json
+[
+  {
+    "id": 123,
+    "name": "Group A",
+    "evaluationDate": "2025-02-15T10:00:00Z",
+    "assignedTo": "PRACTICANTE_ID"
+  }
+]
+```
+
+---
+
+## Evaluaciones (Instructor)
+
+### Crear evaluación
+- URL: `/api/instructor/evaluations/create`
+- Método: `POST`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {token}`
+- Body (completo, ejemplo con 10 mediciones y agregados):
+```json
+{
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "trunkId": 1,
+  "groupId": 10,
+  "comments": "Evaluación inicial - prueba Postman con 10 mediciones.",
+  "score": 70,
+  "measurements": [
+    {
+      "timestamp": 1698140000000,
+      "elapsedMs": 10000,
+      "result": "OK",
+      "angle_deg": "0.0",
+      "angle_status": true,
+      "force_value": "32",
+      "force_status": true,
+      "touch_status": true,
+      "status": true,
+      "message": null,
+      "is_valid": true
+    }
+  ],
+  "totalDurationMs": 145000,
+  "totalMeasurements": 10,
+  "totalSuccess": 7,
+  "totalErrors": 3,
+  "successRate": 0.7,
+  "averageErrorsPerMeasurement": 0.3
+}
+```
+- Respuesta esperada (ejemplo): `200 OK` con el objeto de la evaluación creada. Ejemplo de response:
+```json
+{
+  "id": 456,
+  "evaluatorId": "INSTRUCTOR_GUID_1",
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "evaluatedUserFullName": "María González",
+  "trunkId": 1,
+  "groupId": 10,
+  "evaluationConfigId": 2,
+  "score": 70,
+  "comments": "Evaluación inicial - prueba Postman con 10 mediciones...",
+  "state": "Active",
+  "creationDate": "2025-01-24T21:00:00Z",
+  "validatedAt": null,
+  "totalErrors": 3,
+  "totalSuccess": 7,
+  "totalMeasurements": 10,
+  "successRate": 0.7,
+  "totalDurationMs": 145000,
+  "averageErrorsPerMeasurement": 0.3,
+  "measurements": [ /* objetos de medición */ ]
+}
+```
+- **Nota:** Ya no se incluye el campo `isValid` en la respuesta (fue eliminado de la entidad).
+
+---
+
+### Validar evaluación
+- URL: `/api/instructor/evaluations/{evaluationId}/validate`
+- Método: `POST`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {token}`
+- Body (raw JSON):
+```json
+{
+  "score": 92,
+  "comments": "Validación final: cumple con los requisitos",
+  "signature": "firmaInstructorEjemploBase64==",
+  "evaluationConfigId": 1
+}
+```
+- **Nota:** El campo `is_valid` fue eliminado del body (ya no se usa).
+- Respuesta esperada: `200 OK` con el objeto evaluado actualizado. Ejemplo:
+```json
+{
+  "id": 456,
+  "evaluatorId": "INSTRUCTOR_GUID_1",
+  "evaluatedUserId": "PRACTICANTE_GUID_123",
+  "evaluatedUserFullName": "María González",
+  "score": 92,
+  "state": "Validated",
+  "validatedAt": "2025-01-24T21:30:00Z",
+  "totalErrors": 3,
+  "totalSuccess": 7,
+  "totalMeasurements": 10,
+  "successRate": 0.7,
+  "measurements": []
+}
+```
+
+### Cancelar evaluación
+- URL: `/api/instructor/evaluations/cancel`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body: mismo formato que crear evaluación (completo)
+- Respuesta: `200 OK`, evaluación cancelada. Ejemplo:
+```json
+{ "message": "Evaluation canceled" }
+```
+
+---
+
+### Obtener todas las evaluaciones del instructor
+- URL: `/api/instructor/evaluations`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve todas las evaluaciones creadas por el instructor autenticado.
+- Ejemplo de response:
+```json
+[
+  {
+    "id": 1,
+    "evaluatorId": "INSTRUCTOR_ID",
+    "evaluatedUserId": "PRACTICANTE_ID",
+    "evaluatedUserFullName": "Carlos Ruiz",
+    "trunkId": 1,
+    "groupId": 2,
+    "evaluationConfigId": 1,
+    "score": 90,
+    "comments": "Buen desempeño",
+    "state": "Validated",
+    "creationDate": "2025-01-24T20:00:00Z",
+    "validatedAt": "2025-01-24T21:00:00Z",
+    "totalErrors": 1,
+    "totalSuccess": 3,
+    "totalMeasurements": 4,
+    "successRate": 0.75,
+    "totalDurationMs": 30000,
+    "averageErrorsPerMeasurement": 0.25,
+    "measurements": []
+  }
+]
+```
+- **Nota:** Ahora incluye `evaluatedUserFullName` (nombre completo del practicante evaluado).
+
+---
+
+### Obtener evaluaciones por grupo y practicante
+- URL: `/api/instructor/evaluations/by-group-practitioner?groupId={groupId}&userId={userId}`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve evaluaciones filtradas por `groupId`, por `userId` (practicante) o por ambos. Ambos parámetros son opcionales pero se requiere al menos uno; si no se provee ninguno el endpoint responde `400 Bad Request`.
+
+Casos de uso y ejemplos:
+
+1) **Filtrar por ambos (grupo + practicante)**
+- Request: `/api/instructor/evaluations/by-group-practitioner?groupId=10&userId=PRACTICANTE_GUID_123`
+- Comportamiento: devuelve evaluaciones del grupo `10` realizadas al practicante `PRACTICANTE_GUID_123`.
+- Ejemplo de response (200 OK):
+```json
+[
+  {
+    "id": 456,
+    "evaluatorId": "INSTRUCTOR_GUID_1",
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "trunkId": 1,
+    "groupId": 10,
+    "evaluationConfigId": 2,
+    "score": 70,
+    "comments": "Evaluación...",
+
+    "state": "Active",
+    "creationDate": "2025-01-24T21:00:00Z",
+    "validatedAt": null,
+    "totalErrors": 3,
+    "totalSuccess": 7,
+    "totalMeasurements": 10,
+    "successRate": 0.7,
+    "measurements": []
+  }
+]
+```
+
+2) **Filtrar sólo por grupo**
+- Request: `/api/instructor/evaluations/by-group-practitioner?groupId=10`
+- Comportamiento: devuelve todas las evaluaciones que pertenecen al grupo `10` (de todos los practicantes del grupo).
+- Ejemplo de response (200 OK):
+```json
+[
+  { 
+    "id": 456, 
+    "evaluatedUserId": "PRACTICANTE_A",
+    "evaluatedUserFullName": "Ana López",
+    "groupId": 10, 
+    "score": 70 
+  },
+  { 
+    "id": 457, 
+    "evaluatedUserId": "PRACTICANTE_B",
+    "evaluatedUserFullName": "Luis Martín",
+    "groupId": 10, 
+    "score": 85 
+  }
+]
+```
+
+3) **Filtrar sólo por practicante (userId)**
+- Request: `/api/instructor/evaluations/by-group-practitioner?userId=PRACTICANTE_GUID_123`
+- Comportamiento: devuelve todas las evaluaciones del practicante `PRACTICANTE_GUID_123` (de todos los grupos donde tenga evaluaciones).
+- Ejemplo de response (200 OK):
+```json
+[
+  { 
+    "id": 456, 
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "groupId": 10, 
+    "score": 70 
+  },
+  { 
+    "id": 498, 
+    "evaluatedUserId": "PRACTICANTE_GUID_123",
+    "evaluatedUserFullName": "María González",
+    "groupId": 12, 
+    "score": 88 
+  }
+]
+```
+
+4) **Sin filtros (error)**
+- Request: `/api/instructor/evaluations/by-group-practitioner` (sin query params)
+- Respuesta: `400 Bad Request`
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Se requiere al menos 'groupId' o 'userId' como parámetro de consulta."
+}
+```
+
+---
+
+## Configuraciones de Evaluación
+
+### Crear configuración
+- URL: `/api/instructor/evaluation-configs`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Config Avanzada",
+  "maxErrors": 5,
+  "maxSuccess": 40,
+  "maxTime": 60,
+  "maxTimeInterval": 120
+}
+```
+- **Nota:** `maxSuccess` es **obligatorio** - número máximo de aciertos esperados.
+- Respuesta: `200 OK`, configuración creada. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Config Avanzada",
+  "maxErrors": 5,
+  "maxSuccess": 40,
+  "maxTime": 60,
+  "maxTimeInterval": 120,
+  "isDefault": false,
+  "creationDate": "2025-01-24T20:00:00Z"
+}
+```
+
+---
+
+### Obtener configuraciones de evaluación
+- URL: `/api/instructor/evaluation-configs`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Respuesta: `200 OK`. Ejemplo:
+```json
+[
+  {
+    "id": 1,
+    "name": "Config Default",
+    "maxErrors": 10,
+    "maxSuccess": 30,
+    "maxTime": 30,
+    "maxTimeInterval": 60,
+    "isDefault": true,
+    "status": "Active",
+    "creationDate": "2024-06-01T12:00:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Config Avanzada",
+    "maxErrors": 5,
+    "maxSuccess": 40,
+    "maxTime": 60,
+    "maxTimeInterval": 120,
+    "isDefault": false,
+    "status": "Active",
+    "creationDate": "2024-06-01T12:05:00Z"
+  }
+]
+```
+
+---
+
+### Editar configuración
+- URL: `/api/instructor/evaluation-configs/{id}`
+- Método: `PUT`
+- Headers: `Authorization: Bearer {token}`
+- Body:
+```json
+{
+  "name": "Config Editada",
+  "maxErrors": 7,
+  "maxSuccess": 35,
+  "maxTime": 45,
+  "maxTimeInterval": 90
+}
+```
+- Respuesta: `200 OK`, configuración editada. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Config Editada",
+  "maxErrors": 7,
+  "maxSuccess": 35,
+  "maxTime": 45,
+  "maxTimeInterval": 90,
+  "isDefault": false,
+  "status": "Active"
+}
+```
+
+---
+
+### Eliminar configuración
+- URL: `/api/instructor/evaluation-configs/{id}`
+- Método: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Respuesta: `204 No Content`.
+
+
+---
+
+### Restablecer configuración a default
+- URL: `/api/instructor/groups/{groupId}/evaluation-parameters/reset`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Restablece la configuración de evaluación del grupo a la configuración por defecto del sistema. Si no existe una configuración default, la crea con valores predeterminados (`maxErrors: 10`, `maxSuccess: 30`, `maxTime: 30`).
+- Comportamiento:
+  - Busca o crea la configuración `IsDefault = true`
+  - Elimina la relación actual del grupo en `EvaluationConfigGroups`
+  - Crea una nueva relación entre el grupo y la config default
+- Respuesta: `200 OK` con la configuración default. Ejemplo:
+```json
+{
+  "id": 1,
+  "name": "Default",
+  "maxErrors": 10,
+  "maxSuccess": 30,
+  "maxTime": 30,
+  "isDefault": true
+}
+```
+
+---
+
+## Simulaciones (Practitioner)
+
+### Crear simulación
+- URL: `/api/practitioner/simulations/create`
+- Método: `POST`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {token}`
+- Body (ejemplo completo con 5 mediciones):
+
+```json
+{
+  "trunkId": 1,
+  "comments": "Simulación de prueba con 5 mediciones",
+  "measurements": [
+    {
+      "timestamp": 1698150000000,
+      "elapsedMs": 10000,
+      "result": "OK",
+      "angle_deg": "0.0",
+      "angle_status": true,
+      "force_value": "32",
+      "force_status": true,
+      "touch_status": true,
+      "status": true,
+      "message": null,
+      "is_valid": true
+    }
+  ],
+  "totalDurationMs": 70000,
+  "totalMeasurements": 5,
+  "totalSuccess": 3,
+  "totalErrors": 2,
+  "successRate": 0.6,
+  "averageErrorsPerMeasurement": 0.4
+}
+```
+
+- Respuesta esperada: `200 OK` con el objeto de la simulación creada. Ejemplo:
+
+```json
+{
+  "id": 789,
+  "practitionerId": "PRACTITIONER_GUID_123",
+  "trunkId": 1,
+  "creationDate": "2025-01-24T20:45:00Z",
+  "totalDurationMs": 70000,
+  "totalErrors": 2,
+  "totalSuccess": 3,
+  "totalMeasurements": 5,
+  "successRate": 0.6,
+  "averageErrorsPerMeasurement": 0.4,
+  "comments": "Simulación de prueba con 5 mediciones",
+  "measurements": []
+}
+```
+
+---
+
+### Obtener simulaciones del practicante
+- URL: `/api/practitioner/simulations`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Respuesta: `200 OK`. Ejemplo:
+```json
+[
+
+  {
+    "id": 1,
+    "practitionerId": "PRACTICANTE_ID",
+    "trunkId": 1,
+    "creationDate": "2025-01-24T19:00:00Z",
+    "totalDurationMs": 30000,
+    "totalErrors": 1,
+    "totalSuccess": 3,
+    "totalMeasurements": 4,
+    "successRate": 0.75,
+    "averageErrorsPerMeasurement": 0.25,
+    "comments": "Simulación completa"
+  }
+]
+```
+
+---
+
+### Cancelar simulación
+- URL: `/api/practitioner/simulations/cancel`
+- Método: `POST`
+- Headers: `Authorization: Bearer {token}`
+- Body: mismo formato que crear simulación (completo)
+- Respuesta: `200 OK`. Ejemplo:
+```json
+{ "message": "Simulation canceled" }
+```
+
+---
+
+## Nuevos endpoints y cómo probarlos
+
+### Listar practicantes (todos o por grupo)
+- URL: `/api/instructor/practitioners` 
+- Método: `GET`
+- Params opcional: `groupId` (ej.: `/api/instructor/practitioners?groupId=123`)
+- Headers: `Authorization: Bearer {token}`
+- Comportamiento:
+  - Sin `groupId`: devuelve todos los usuarios que tienen el rol `Practitioner`.
+  - Con `groupId`: devuelve solo los practicantes que pertenecen al grupo (el grupo debe estar `Active`).
+- Ejemplo (Postman):
+  - Request GET `https://{HOST}/api/instructor/practitioners?groupId=5`
+  - Headers: `Authorization: Bearer <TOKEN>`
+  - Response ejemplo:
+  ```json
+  [
+    { "id": "USER_ID_1", "fullname": "Nombre Uno" }, 
+    { "id": "USER_ID_2", "fullname": "Nombre Dos" }
+  ]
+  ```
+
+### Ranking por grupos del instructor
+- URL: `/api/instructor/ranking`
+- Método: `GET`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: Devuelve un ranking (resumen por grupos) para el instructor autenticado. La estructura incluye, por grupo, indicadores agregados (p.ej. promedios de score, cantidad de evaluaciones, tasas de éxito) para ayudar a comparar desempeños entre grupos.
+- Ejemplo de response (200 OK):
+```json
+[
+  {
+    "groupId": 10,
+    "groupName": "Grupo A",
+    "groupAverage": 78.6,
+    "practitioners": [
+      {
+        "userId": "PRACTICANTE_GUID_1",
+        "fullName": "María González",
+        "averageScore": 82.5,
+        "evaluationCount": 12
+      },
+      {
+        "userId": "PRACTICANTE_GUID_2",
+        "fullName": "Carlos Ruiz",
+        "averageScore": 74.7,
+        "evaluationCount": 8
+      }
+    ]
+  }
+]
+```
+
+### Eliminar evaluación permanentemente (sólo uso manual)
+- URL: `/api/instructor/evaluations/{id}`
+- Método: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: elimina físicamente la evaluación y sus mediciones de la base de datos. Uso reservado para corrección manual desde Postman o admin tools.
+- Ejemplo (Postman):
+  - Request DELETE `https://{HOST}/api/instructor/evaluations/123`
+  - Headers: `Authorization: Bearer <TOKEN>`
+  - Response: `204 No Content`
+
+### Eliminar simulación permanentemente (sólo uso manual)
+- URL: `/api/instructor/simulations/{id}`
+- Método: `DELETE`
+- Headers: `Authorization: Bearer {token}`
+- Descripción: elimina físicamente la simulación y sus mediciones de la base de datos. Uso reservado para corrección manual desde Postman o admin tools.
+- Ejemplo (Postman):
+  - Request DELETE `https://{HOST}/api/instructor/simulations/789`
+  - Headers: `Authorization: Bearer <TOKEN>`
+  - Response: `204 No Content`
+
+---
+
+### Endpoints de manejo rápido para administracción (incluye asignación/desasignación en evaluaciones)
+
+- Asignar practicante a evaluación (POST) `https://{HOST}/api/instructor/evaluations/{evaluationId}/assign-practitioner/{userId}`
+- Desasignar practicante de evaluación (POST) `https://{HOST}/api/instructor/evaluations/{evaluationId}/unassign-practitioner`
+
+---
+
+## Cambios recientes en la API (Enero 2025)
+
+### 1. Campo `IsValid` eliminado de Evaluaciones
+- **Qué cambió:** El campo `isValid` fue eliminado de la entidad `Evaluation` y de todos los DTOs relacionados.
+- **Endpoints afectados:**
+  - `POST /api/instructor/evaluations/create` - response ya no incluye `isValid`
+  - `POST /api/instructor/evaluations/{id}/validate` - body ya no requiere/acepta `is_valid`
+  - `GET /api/instructor/evaluations` - response ya no incluye `isValid`
+  - `GET /api/instructor/evaluations/by-group-practitioner` - response ya no incluye `isValid`
+- **Acción requerida:** Clientes mobile deben remover referencias a `isValid` en evaluaciones.
+
+### 2. Campo `MaxSuccess` agregado a EvaluationConfig
+- **Qué cambió:** Nuevo campo obligatorio `maxSuccess` en configuraciones de evaluación.
+- **Endpoints afectados:**
+  - `POST /api/instructor/evaluation-configs` - body requiere `maxSuccess`
+  - `PUT /api/instructor/evaluation-configs/{id}` - body requiere `maxSuccess`
+  - `GET /api/instructor/evaluation-configs` - response incluye `maxSuccess`
+  - `POST /api/instructor/groups/{groupId}/evaluation-parameters/reset` - response incluye `maxSuccess`
+- **Valor por defecto:** 30 aciertos
+- **Acción requerida:** Clientes mobile deben incluir `maxSuccess` al crear/editar configs.
+
+### 3. Campo `EvaluationDate` agregado a Groups
+- **Qué cambió:** Nuevo campo obligatorio `evaluationDate` en grupos (fecha programada de evaluación).
+- **Endpoints afectados:**
+  - `POST /api/instructor/groups` - body requiere `evaluationDate`
+  - `PUT /api/instructor/groups/{id}` - body requiere `evaluationDate`
+  - `GET /api/instructor/groups/owned` - response incluye `evaluationDate`
+- **Acción requerida:** Clientes mobile deben permitir al usuario seleccionar `evaluationDate` al crear/editar grupos.
+
+### 4. Campo `EvaluatedUserFullName` agregado a Evaluaciones
+- **Qué cambió:** Las respuestas de evaluaciones ahora incluyen el nombre completo del practicante evaluado.
+- **Endpoints afectados:**
+  - `GET /api/instructor/evaluaciones` - response incluye `evaluatedUserFullName`
+  - `GET /api/instructor/evaluaciones/by-group-practitioner` - response incluye `evaluatedUserFullName`
+  - `POST /api/instructor/evaluations/{id}/validate` - response incluye `evaluatedUserFullName`
+- **Beneficio:** No es necesario hacer llamadas adicionales para obtener el nombre del practicante.
+
+---
+
+Última actualización: Enero 2025 - documentación actualizada con cambios de schema de base de datos.
