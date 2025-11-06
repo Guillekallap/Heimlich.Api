@@ -59,7 +59,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
                             Id = m.Id,
                             Timestamp = new DateTimeOffset(m.Time).ToUnixTimeMilliseconds(),
                             ElapsedMs = m.ElapsedMs ?? 0L,
-                            Result = m.Status ? "CORRECT" : "INCORRECT",
+                            Result = m.IsValid ? "CORRECT" : "INCORRECT",
                             AngleDeg = m.AngleDeg ?? string.Empty,
                             AngleStatus = m.AngleStatus,
                             ForceValue = m.ForceValue ?? string.Empty,
