@@ -19,7 +19,7 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
         {
             var query = _context.Evaluations
                 .Include(e => e.EvaluatedUser)
-                .Where(e => e.State == SessionStateEnum.Active || e.State == SessionStateEnum.Validated)
+                .Where(e => e.State == SessionStateEnum.Validated)
                 .AsQueryable();
 
             var rankings = await query
