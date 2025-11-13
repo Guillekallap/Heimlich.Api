@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 public class EvaluationParametersDto
 {
+    [JsonPropertyName("id")]
+    public int? Id { get; set; }
+
     [JsonPropertyName("name")]
     public string Name { get; set; }
 
@@ -16,4 +19,10 @@ public class EvaluationParametersDto
 
     [JsonPropertyName("maxTimeInterval")]
     public int MaxTimeInterval { get; set; } // Lapso en segundos entre evaluaciones automáticas
+
+    [JsonPropertyName("isDefault")]
+    public bool? IsDefault { get; set; }
+
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
 }

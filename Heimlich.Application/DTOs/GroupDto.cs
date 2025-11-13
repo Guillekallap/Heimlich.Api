@@ -30,5 +30,8 @@ namespace Heimlich.Application.DTOs
 
         [JsonPropertyName("practitionerIds")]
         public IList<string> PractitionerIds { get; set; }
+
+        [JsonPropertyName("evaluationConfig")]
+        public EvaluationParametersDto? EvaluationConfig { get; set; }
     }
 }
