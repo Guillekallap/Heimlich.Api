@@ -17,7 +17,10 @@ namespace Heimlich.Application.Features.Evaluations.Handlers
         {
             var evaluations = await _context.Evaluations
                 .Include(e => e.EvaluatedUser)
-                .Where(e => e.EvaluatorId == request.InstructorId && e.Score != null && e.GroupId != null && (e.State == Domain.Enums.SessionStateEnum.Active || e.State == Domain.Enums.SessionStateEnum.Validated))
+                .Where(e => e.EvaluatorId == request.InstructorId 
+                    && e.Score != null 
+                    && e.GroupId != null 
+                    && e.State == Domain.Enums.SessionStateEnum.Validated)
                 .ToListAsync(cancellationToken);
 
             var groupIds = evaluations.Select(e => e.GroupId.Value).Distinct().ToList();
